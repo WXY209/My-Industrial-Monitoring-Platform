@@ -33,8 +33,6 @@
             this.UsertextBox = new System.Windows.Forms.TextBox();
             this.Psdlabel = new System.Windows.Forms.Label();
             this.PsdtextBox = new System.Windows.Forms.TextBox();
-            this.radioButton1 = new System.Windows.Forms.RadioButton();
-            this.radioButton2 = new System.Windows.Forms.RadioButton();
             this.Registerbutton = new System.Windows.Forms.Button();
             this.Loginbutton = new System.Windows.Forms.Button();
             this.SuspendLayout();
@@ -86,30 +84,6 @@
             this.PsdtextBox.Size = new System.Drawing.Size(193, 35);
             this.PsdtextBox.TabIndex = 2;
             // 
-            // radioButton1
-            // 
-            this.radioButton1.AutoSize = true;
-            this.radioButton1.Checked = true;
-            this.radioButton1.Font = new System.Drawing.Font("微软雅黑", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.radioButton1.Location = new System.Drawing.Point(77, 174);
-            this.radioButton1.Name = "radioButton1";
-            this.radioButton1.Size = new System.Drawing.Size(93, 32);
-            this.radioButton1.TabIndex = 3;
-            this.radioButton1.TabStop = true;
-            this.radioButton1.Text = "管理员";
-            this.radioButton1.UseVisualStyleBackColor = true;
-            // 
-            // radioButton2
-            // 
-            this.radioButton2.AutoSize = true;
-            this.radioButton2.Font = new System.Drawing.Font("微软雅黑", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.radioButton2.Location = new System.Drawing.Point(258, 174);
-            this.radioButton2.Name = "radioButton2";
-            this.radioButton2.Size = new System.Drawing.Size(72, 32);
-            this.radioButton2.TabIndex = 3;
-            this.radioButton2.Text = "用户";
-            this.radioButton2.UseVisualStyleBackColor = true;
-            // 
             // Registerbutton
             // 
             this.Registerbutton.Font = new System.Drawing.Font("微软雅黑", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
@@ -119,6 +93,7 @@
             this.Registerbutton.TabIndex = 4;
             this.Registerbutton.Text = "注册";
             this.Registerbutton.UseVisualStyleBackColor = true;
+            this.Registerbutton.Click += new System.EventHandler(this.Registerbutton_Click);
             // 
             // Loginbutton
             // 
@@ -129,6 +104,7 @@
             this.Loginbutton.TabIndex = 4;
             this.Loginbutton.Text = "登录";
             this.Loginbutton.UseVisualStyleBackColor = true;
+            this.Loginbutton.Click += new System.EventHandler(this.Loginbutton_Click);
             // 
             // Form1
             // 
@@ -137,8 +113,6 @@
             this.ClientSize = new System.Drawing.Size(440, 284);
             this.Controls.Add(this.Loginbutton);
             this.Controls.Add(this.Registerbutton);
-            this.Controls.Add(this.radioButton2);
-            this.Controls.Add(this.radioButton1);
             this.Controls.Add(this.PsdtextBox);
             this.Controls.Add(this.Psdlabel);
             this.Controls.Add(this.UsertextBox);
@@ -146,7 +120,7 @@
             this.Controls.Add(this.title);
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Form1";
+            this.Text = "工业监控平台登录界面";
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -159,8 +133,6 @@
         private System.Windows.Forms.TextBox UsertextBox;
         private System.Windows.Forms.Label Psdlabel;
         private System.Windows.Forms.TextBox PsdtextBox;
-        private System.Windows.Forms.RadioButton radioButton1;
-        private System.Windows.Forms.RadioButton radioButton2;
         private System.Windows.Forms.Button Registerbutton;
         private System.Windows.Forms.Button Loginbutton;
     }

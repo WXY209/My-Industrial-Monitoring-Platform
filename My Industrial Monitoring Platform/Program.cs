@@ -16,7 +16,9 @@ namespace My_Industrial_Monitoring_Platform
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            UserDB.Initizlize();
+            //Application.Run(new Form1());
+            Application.Run(new HMI());
         }
     }
 }
