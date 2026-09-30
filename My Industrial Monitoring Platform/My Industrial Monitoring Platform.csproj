@@ -66,6 +66,7 @@
     <Compile Include="HMI.Designer.cs">
       <DependentUpon>HMI.cs</DependentUpon>
     </Compile>
+    <Compile Include="UserManagementPage.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserDB.cs" />

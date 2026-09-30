@@ -28,6 +28,8 @@ namespace My_Industrial_Monitoring_Platform
             this.checklabel_UI = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.rootLayout = new System.Windows.Forms.TableLayoutPanel();
+            this.userManagementPage = new My_Industrial_Monitoring_Platform.UserManagementPage();
             this.button6 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
@@ -102,7 +104,7 @@ namespace My_Industrial_Monitoring_Platform
             this.namelabel_UI.Name = "namelabel_UI";
             this.namelabel_UI.Size = new System.Drawing.Size(53, 12);
             this.namelabel_UI.TabIndex = 1;
-            this.namelabel_UI.Text = "实时监控";
+            this.namelabel_UI.Text = "用户管理";
             // 
             // statusPanel
             // 
@@ -294,13 +296,37 @@ namespace My_Industrial_Monitoring_Platform
             this.button7.Text = "用户管理";
             this.button7.UseVisualStyleBackColor = true;
             // 
+            // rootLayout
+            // 
+            this.rootLayout.ColumnCount = 2;
+            this.rootLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 137F));
+            this.rootLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.rootLayout.Controls.Add(this.toppanel, 0, 0);
+            this.rootLayout.Controls.Add(this.panel1, 0, 1);
+            this.rootLayout.Controls.Add(this.userManagementPage, 1, 1);
+            this.rootLayout.SetColumnSpan(this.toppanel, 2);
+            this.rootLayout.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.rootLayout.Location = new System.Drawing.Point(0, 0);
+            this.rootLayout.Name = "rootLayout";
+            this.rootLayout.RowCount = 2;
+            this.rootLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
+            this.rootLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.rootLayout.Size = new System.Drawing.Size(752, 588);
+            this.rootLayout.TabIndex = 2;
+            // 
+            // userManagementPage
+            // 
+            this.userManagementPage.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.userManagementPage.Location = new System.Drawing.Point(140, 43);
+            this.userManagementPage.Name = "userManagementPage";
+            this.userManagementPage.Size = new System.Drawing.Size(609, 542);
+            this.userManagementPage.TabIndex = 0;
             // HMI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(752, 588);
-            this.Controls.Add(this.panel1);
-            this.Controls.Add(this.toppanel);
+            this.Controls.Add(this.rootLayout);
             this.Name = "HMI";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "工业监控平台界面";
@@ -338,5 +364,7 @@ namespace My_Industrial_Monitoring_Platform
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Button button6;
         private System.Windows.Forms.Button button7;
+        private System.Windows.Forms.TableLayoutPanel rootLayout;
+        private UserManagementPage userManagementPage;
     }
 }
