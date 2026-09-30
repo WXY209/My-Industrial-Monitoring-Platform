@@ -28,32 +28,34 @@ namespace My_Industrial_Monitoring_Platform
             this.checklabel_UI = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
-            this.rootLayout = new System.Windows.Forms.TableLayoutPanel();
-            this.userManagementPage = new My_Industrial_Monitoring_Platform.UserManagementPage();
+            this.button7 = new System.Windows.Forms.Button();
+            this.selectedNavIndicator = new System.Windows.Forms.Panel();
             this.button6 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
             this.button4 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
-            this.button7 = new System.Windows.Forms.Button();
-            this.selectedNavIndicator = new System.Windows.Forms.Panel();
+            this.rootLayout = new System.Windows.Forms.TableLayoutPanel();
+            this.userManagementPage = new My_Industrial_Monitoring_Platform.UserManagementPage();
             this.toppanel.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.breadcrumbPanel.SuspendLayout();
             this.statusPanel.SuspendLayout();
             this.panel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
+            this.rootLayout.SuspendLayout();
             this.SuspendLayout();
             // 
             // toppanel
             // 
             this.toppanel.BackColor = System.Drawing.Color.White;
+            this.rootLayout.SetColumnSpan(this.toppanel, 2);
             this.toppanel.Controls.Add(this.tableLayoutPanel1);
             this.toppanel.Dock = System.Windows.Forms.DockStyle.Top;
-            this.toppanel.Location = new System.Drawing.Point(0, 0);
+            this.toppanel.Location = new System.Drawing.Point(3, 3);
             this.toppanel.Name = "toppanel";
-            this.toppanel.Size = new System.Drawing.Size(752, 40);
+            this.toppanel.Size = new System.Drawing.Size(769, 34);
             this.toppanel.TabIndex = 0;
             // 
             // tableLayoutPanel1
@@ -68,7 +70,7 @@ namespace My_Industrial_Monitoring_Platform
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 1;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(752, 40);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(769, 34);
             this.tableLayoutPanel1.TabIndex = 1;
             // 
             // breadcrumbPanel
@@ -81,7 +83,7 @@ namespace My_Industrial_Monitoring_Platform
             this.breadcrumbPanel.Margin = new System.Windows.Forms.Padding(0);
             this.breadcrumbPanel.Name = "breadcrumbPanel";
             this.breadcrumbPanel.Padding = new System.Windows.Forms.Padding(8, 12, 4, 0);
-            this.breadcrumbPanel.Size = new System.Drawing.Size(300, 40);
+            this.breadcrumbPanel.Size = new System.Drawing.Size(307, 34);
             this.breadcrumbPanel.TabIndex = 0;
             this.breadcrumbPanel.WrapContents = false;
             // 
@@ -116,11 +118,11 @@ namespace My_Industrial_Monitoring_Platform
             this.statusPanel.Controls.Add(this.checklabel_UI);
             this.statusPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.statusPanel.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
-            this.statusPanel.Location = new System.Drawing.Point(300, 0);
+            this.statusPanel.Location = new System.Drawing.Point(307, 0);
             this.statusPanel.Margin = new System.Windows.Forms.Padding(0);
             this.statusPanel.Name = "statusPanel";
             this.statusPanel.Padding = new System.Windows.Forms.Padding(4, 12, 8, 0);
-            this.statusPanel.Size = new System.Drawing.Size(452, 40);
+            this.statusPanel.Size = new System.Drawing.Size(462, 34);
             this.statusPanel.TabIndex = 1;
             this.statusPanel.WrapContents = false;
             // 
@@ -128,7 +130,7 @@ namespace My_Industrial_Monitoring_Platform
             // 
             this.timelabel_UI.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.timelabel_UI.AutoSize = true;
-            this.timelabel_UI.Location = new System.Drawing.Point(407, 13);
+            this.timelabel_UI.Location = new System.Drawing.Point(417, 13);
             this.timelabel_UI.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.timelabel_UI.Name = "timelabel_UI";
             this.timelabel_UI.Size = new System.Drawing.Size(29, 12);
@@ -140,7 +142,7 @@ namespace My_Industrial_Monitoring_Platform
             this.idtypelabel_UI.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.idtypelabel_UI.AutoSize = true;
             this.idtypelabel_UI.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.idtypelabel_UI.Location = new System.Drawing.Point(356, 12);
+            this.idtypelabel_UI.Location = new System.Drawing.Point(366, 12);
             this.idtypelabel_UI.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.idtypelabel_UI.Name = "idtypelabel_UI";
             this.idtypelabel_UI.Size = new System.Drawing.Size(43, 14);
@@ -152,7 +154,7 @@ namespace My_Industrial_Monitoring_Platform
             this.idlable_UI.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.idlable_UI.AutoSize = true;
             this.idlable_UI.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.idlable_UI.Location = new System.Drawing.Point(311, 12);
+            this.idlable_UI.Location = new System.Drawing.Point(321, 12);
             this.idlable_UI.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.idlable_UI.Name = "idlable_UI";
             this.idlable_UI.Size = new System.Drawing.Size(37, 14);
@@ -163,7 +165,7 @@ namespace My_Industrial_Monitoring_Platform
             // 
             this.checklabel_UI.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.checklabel_UI.AutoSize = true;
-            this.checklabel_UI.Location = new System.Drawing.Point(232, 13);
+            this.checklabel_UI.Location = new System.Drawing.Point(242, 13);
             this.checklabel_UI.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.checklabel_UI.Name = "checklabel_UI";
             this.checklabel_UI.Size = new System.Drawing.Size(71, 12);
@@ -175,9 +177,9 @@ namespace My_Industrial_Monitoring_Platform
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(26)))), ((int)(((byte)(46)))));
             this.panel1.Controls.Add(this.tableLayoutPanel2);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Left;
-            this.panel1.Location = new System.Drawing.Point(0, 40);
+            this.panel1.Location = new System.Drawing.Point(3, 43);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(137, 548);
+            this.panel1.Size = new System.Drawing.Size(131, 523);
             this.panel1.TabIndex = 1;
             // 
             // tableLayoutPanel2
@@ -204,144 +206,145 @@ namespace My_Industrial_Monitoring_Platform
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 10F));
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 10F));
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 30F));
-            this.tableLayoutPanel2.Size = new System.Drawing.Size(137, 548);
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(131, 523);
             this.tableLayoutPanel2.TabIndex = 0;
-            // 
-            // button6
-            // 
-            this.button6.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.button6.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button6.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button6.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.button6.Location = new System.Drawing.Point(3, 273);
-            this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(131, 48);
-            this.button6.TabIndex = 5;
-            this.button6.Text = "系统设置";
-            this.button6.UseVisualStyleBackColor = false;
-            this.button6.BackColor = System.Drawing.Color.FromArgb(16, 26, 46);
-            this.button6.Margin = new System.Windows.Forms.Padding(0);
-            this.button6.FlatAppearance.BorderSize = 0;
-            this.button6.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(28, 45, 69);
-            this.button6.Cursor = System.Windows.Forms.Cursors.Hand;
-            // 
-            // button1
-            // 
-            this.button1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button1.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button1.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.button1.Location = new System.Drawing.Point(3, 3);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(131, 48);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "首页总览";
-            this.button1.UseVisualStyleBackColor = false;
-            this.button1.BackColor = System.Drawing.Color.FromArgb(16, 26, 46);
-            this.button1.Margin = new System.Windows.Forms.Padding(0);
-            this.button1.FlatAppearance.BorderSize = 0;
-            this.button1.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(28, 45, 69);
-            this.button1.Cursor = System.Windows.Forms.Cursors.Hand;
-            // 
-            // button2
-            // 
-            this.button2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button2.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button2.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.button2.Location = new System.Drawing.Point(3, 57);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(131, 48);
-            this.button2.TabIndex = 1;
-            this.button2.Text = "实时监控";
-            this.button2.UseVisualStyleBackColor = false;
-            this.button2.BackColor = System.Drawing.Color.FromArgb(16, 26, 46);
-            this.button2.Margin = new System.Windows.Forms.Padding(0);
-            this.button2.FlatAppearance.BorderSize = 0;
-            this.button2.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(28, 45, 69);
-            this.button2.Cursor = System.Windows.Forms.Cursors.Hand;
-            // 
-            // button3
-            // 
-            this.button3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button3.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button3.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.button3.Location = new System.Drawing.Point(3, 111);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(131, 48);
-            this.button3.TabIndex = 2;
-            this.button3.Text = "报警中心";
-            this.button3.UseVisualStyleBackColor = false;
-            this.button3.BackColor = System.Drawing.Color.FromArgb(16, 26, 46);
-            this.button3.Margin = new System.Windows.Forms.Padding(0);
-            this.button3.FlatAppearance.BorderSize = 0;
-            this.button3.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(28, 45, 69);
-            this.button3.Cursor = System.Windows.Forms.Cursors.Hand;
-            // 
-            // button4
-            // 
-            this.button4.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button4.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button4.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.button4.Location = new System.Drawing.Point(3, 165);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(131, 48);
-            this.button4.TabIndex = 3;
-            this.button4.Text = "历史记录";
-            this.button4.UseVisualStyleBackColor = false;
-            this.button4.BackColor = System.Drawing.Color.FromArgb(16, 26, 46);
-            this.button4.Margin = new System.Windows.Forms.Padding(0);
-            this.button4.FlatAppearance.BorderSize = 0;
-            this.button4.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(28, 45, 69);
-            this.button4.Cursor = System.Windows.Forms.Cursors.Hand;
-            // 
-            // button5
-            // 
-            this.button5.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button5.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button5.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.button5.Location = new System.Drawing.Point(3, 219);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(131, 48);
-            this.button5.TabIndex = 4;
-            this.button5.Text = "网络通讯";
-            this.button5.UseVisualStyleBackColor = false;
-            this.button5.BackColor = System.Drawing.Color.FromArgb(16, 26, 46);
-            this.button5.Margin = new System.Windows.Forms.Padding(0);
-            this.button5.FlatAppearance.BorderSize = 0;
-            this.button5.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(28, 45, 69);
-            this.button5.Cursor = System.Windows.Forms.Cursors.Hand;
             // 
             // button7
             // 
+            this.button7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(59)))), ((int)(((byte)(91)))));
+            this.button7.Cursor = System.Windows.Forms.Cursors.Hand;
             this.button7.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.button7.FlatAppearance.BorderSize = 0;
+            this.button7.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(59)))), ((int)(((byte)(91)))));
             this.button7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button7.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.button7.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.button7.Location = new System.Drawing.Point(3, 327);
+            this.button7.Location = new System.Drawing.Point(0, 312);
+            this.button7.Margin = new System.Windows.Forms.Padding(0);
             this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(131, 48);
+            this.button7.Size = new System.Drawing.Size(131, 52);
             this.button7.TabIndex = 6;
             this.button7.Text = "用户管理";
-            this.button7.UseVisualStyleBackColor = true;
-            this.button7.BackColor = System.Drawing.Color.FromArgb(32, 59, 91);
-            this.button7.Margin = new System.Windows.Forms.Padding(0);
-            this.button7.FlatAppearance.BorderSize = 0;
-            this.button7.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(32, 59, 91);
-            this.button7.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.button7.UseVisualStyleBackColor = false;
             // 
             // selectedNavIndicator
             // 
-            this.selectedNavIndicator.BackColor = System.Drawing.Color.FromArgb(55, 130, 245);
+            this.selectedNavIndicator.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(130)))), ((int)(((byte)(245)))));
             this.selectedNavIndicator.Dock = System.Windows.Forms.DockStyle.Left;
             this.selectedNavIndicator.Enabled = false;
+            this.selectedNavIndicator.Location = new System.Drawing.Point(0, 364);
             this.selectedNavIndicator.Margin = new System.Windows.Forms.Padding(0);
             this.selectedNavIndicator.Name = "selectedNavIndicator";
-            this.selectedNavIndicator.Size = new System.Drawing.Size(3, 54);
+            this.selectedNavIndicator.Size = new System.Drawing.Size(3, 159);
             this.selectedNavIndicator.TabIndex = 7;
+            // 
+            // button6
+            // 
+            this.button6.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(26)))), ((int)(((byte)(46)))));
+            this.button6.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.button6.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.button6.FlatAppearance.BorderSize = 0;
+            this.button6.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(45)))), ((int)(((byte)(69)))));
+            this.button6.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button6.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.button6.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.button6.Location = new System.Drawing.Point(0, 260);
+            this.button6.Margin = new System.Windows.Forms.Padding(0);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(131, 52);
+            this.button6.TabIndex = 5;
+            this.button6.Text = "系统设置";
+            this.button6.UseVisualStyleBackColor = false;
+            // 
+            // button1
+            // 
+            this.button1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(26)))), ((int)(((byte)(46)))));
+            this.button1.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.button1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.button1.FlatAppearance.BorderSize = 0;
+            this.button1.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(45)))), ((int)(((byte)(69)))));
+            this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button1.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.button1.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.button1.Location = new System.Drawing.Point(0, 0);
+            this.button1.Margin = new System.Windows.Forms.Padding(0);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(131, 52);
+            this.button1.TabIndex = 0;
+            this.button1.Text = "首页总览";
+            this.button1.UseVisualStyleBackColor = false;
+            // 
+            // button2
+            // 
+            this.button2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(26)))), ((int)(((byte)(46)))));
+            this.button2.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.button2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.button2.FlatAppearance.BorderSize = 0;
+            this.button2.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(45)))), ((int)(((byte)(69)))));
+            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button2.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.button2.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.button2.Location = new System.Drawing.Point(0, 52);
+            this.button2.Margin = new System.Windows.Forms.Padding(0);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(131, 52);
+            this.button2.TabIndex = 1;
+            this.button2.Text = "实时监控";
+            this.button2.UseVisualStyleBackColor = false;
+            // 
+            // button3
+            // 
+            this.button3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(26)))), ((int)(((byte)(46)))));
+            this.button3.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.button3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.button3.FlatAppearance.BorderSize = 0;
+            this.button3.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(45)))), ((int)(((byte)(69)))));
+            this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button3.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.button3.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.button3.Location = new System.Drawing.Point(0, 104);
+            this.button3.Margin = new System.Windows.Forms.Padding(0);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(131, 52);
+            this.button3.TabIndex = 2;
+            this.button3.Text = "报警中心";
+            this.button3.UseVisualStyleBackColor = false;
+            // 
+            // button4
+            // 
+            this.button4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(26)))), ((int)(((byte)(46)))));
+            this.button4.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.button4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.button4.FlatAppearance.BorderSize = 0;
+            this.button4.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(45)))), ((int)(((byte)(69)))));
+            this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button4.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.button4.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.button4.Location = new System.Drawing.Point(0, 156);
+            this.button4.Margin = new System.Windows.Forms.Padding(0);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(131, 52);
+            this.button4.TabIndex = 3;
+            this.button4.Text = "历史记录";
+            this.button4.UseVisualStyleBackColor = false;
+            // 
+            // button5
+            // 
+            this.button5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(26)))), ((int)(((byte)(46)))));
+            this.button5.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.button5.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.button5.FlatAppearance.BorderSize = 0;
+            this.button5.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(45)))), ((int)(((byte)(69)))));
+            this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button5.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.button5.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.button5.Location = new System.Drawing.Point(0, 208);
+            this.button5.Margin = new System.Windows.Forms.Padding(0);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(131, 52);
+            this.button5.TabIndex = 4;
+            this.button5.Text = "网络通讯";
+            this.button5.UseVisualStyleBackColor = false;
             // 
             // rootLayout
             // 
@@ -351,28 +354,30 @@ namespace My_Industrial_Monitoring_Platform
             this.rootLayout.Controls.Add(this.toppanel, 0, 0);
             this.rootLayout.Controls.Add(this.panel1, 0, 1);
             this.rootLayout.Controls.Add(this.userManagementPage, 1, 1);
-            this.rootLayout.SetColumnSpan(this.toppanel, 2);
             this.rootLayout.Dock = System.Windows.Forms.DockStyle.Fill;
             this.rootLayout.Location = new System.Drawing.Point(0, 0);
             this.rootLayout.Name = "rootLayout";
             this.rootLayout.RowCount = 2;
             this.rootLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
             this.rootLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.rootLayout.Size = new System.Drawing.Size(752, 588);
+            this.rootLayout.Size = new System.Drawing.Size(775, 569);
             this.rootLayout.TabIndex = 2;
             // 
             // userManagementPage
             // 
+            this.userManagementPage.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(241)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.userManagementPage.Dock = System.Windows.Forms.DockStyle.Fill;
             this.userManagementPage.Location = new System.Drawing.Point(140, 43);
             this.userManagementPage.Name = "userManagementPage";
-            this.userManagementPage.Size = new System.Drawing.Size(609, 542);
+            this.userManagementPage.Padding = new System.Windows.Forms.Padding(12);
+            this.userManagementPage.Size = new System.Drawing.Size(632, 523);
             this.userManagementPage.TabIndex = 0;
+            // 
             // HMI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(752, 588);
+            this.ClientSize = new System.Drawing.Size(775, 569);
             this.Controls.Add(this.rootLayout);
             this.Name = "HMI";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -386,6 +391,7 @@ namespace My_Industrial_Monitoring_Platform
             this.statusPanel.PerformLayout();
             this.panel1.ResumeLayout(false);
             this.tableLayoutPanel2.ResumeLayout(false);
+            this.rootLayout.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
