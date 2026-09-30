@@ -37,6 +37,7 @@ namespace My_Industrial_Monitoring_Platform
             this.button4 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
+            this.selectedNavIndicator = new System.Windows.Forms.Panel();
             this.toppanel.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.breadcrumbPanel.SuspendLayout();
@@ -184,6 +185,7 @@ namespace My_Industrial_Monitoring_Platform
             this.tableLayoutPanel2.ColumnCount = 1;
             this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel2.Controls.Add(this.button7, 0, 6);
+            this.tableLayoutPanel2.Controls.Add(this.selectedNavIndicator, 0, 6);
             this.tableLayoutPanel2.Controls.Add(this.button6, 0, 5);
             this.tableLayoutPanel2.Controls.Add(this.button1, 0, 0);
             this.tableLayoutPanel2.Controls.Add(this.button2, 0, 1);
@@ -216,7 +218,12 @@ namespace My_Industrial_Monitoring_Platform
             this.button6.Size = new System.Drawing.Size(131, 48);
             this.button6.TabIndex = 5;
             this.button6.Text = "系统设置";
-            this.button6.UseVisualStyleBackColor = true;
+            this.button6.UseVisualStyleBackColor = false;
+            this.button6.BackColor = System.Drawing.Color.FromArgb(16, 26, 46);
+            this.button6.Margin = new System.Windows.Forms.Padding(0);
+            this.button6.FlatAppearance.BorderSize = 0;
+            this.button6.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(28, 45, 69);
+            this.button6.Cursor = System.Windows.Forms.Cursors.Hand;
             // 
             // button1
             // 
@@ -229,7 +236,12 @@ namespace My_Industrial_Monitoring_Platform
             this.button1.Size = new System.Drawing.Size(131, 48);
             this.button1.TabIndex = 0;
             this.button1.Text = "首页总览";
-            this.button1.UseVisualStyleBackColor = true;
+            this.button1.UseVisualStyleBackColor = false;
+            this.button1.BackColor = System.Drawing.Color.FromArgb(16, 26, 46);
+            this.button1.Margin = new System.Windows.Forms.Padding(0);
+            this.button1.FlatAppearance.BorderSize = 0;
+            this.button1.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(28, 45, 69);
+            this.button1.Cursor = System.Windows.Forms.Cursors.Hand;
             // 
             // button2
             // 
@@ -242,7 +254,12 @@ namespace My_Industrial_Monitoring_Platform
             this.button2.Size = new System.Drawing.Size(131, 48);
             this.button2.TabIndex = 1;
             this.button2.Text = "实时监控";
-            this.button2.UseVisualStyleBackColor = true;
+            this.button2.UseVisualStyleBackColor = false;
+            this.button2.BackColor = System.Drawing.Color.FromArgb(16, 26, 46);
+            this.button2.Margin = new System.Windows.Forms.Padding(0);
+            this.button2.FlatAppearance.BorderSize = 0;
+            this.button2.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(28, 45, 69);
+            this.button2.Cursor = System.Windows.Forms.Cursors.Hand;
             // 
             // button3
             // 
@@ -255,7 +272,12 @@ namespace My_Industrial_Monitoring_Platform
             this.button3.Size = new System.Drawing.Size(131, 48);
             this.button3.TabIndex = 2;
             this.button3.Text = "报警中心";
-            this.button3.UseVisualStyleBackColor = true;
+            this.button3.UseVisualStyleBackColor = false;
+            this.button3.BackColor = System.Drawing.Color.FromArgb(16, 26, 46);
+            this.button3.Margin = new System.Windows.Forms.Padding(0);
+            this.button3.FlatAppearance.BorderSize = 0;
+            this.button3.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(28, 45, 69);
+            this.button3.Cursor = System.Windows.Forms.Cursors.Hand;
             // 
             // button4
             // 
@@ -268,7 +290,12 @@ namespace My_Industrial_Monitoring_Platform
             this.button4.Size = new System.Drawing.Size(131, 48);
             this.button4.TabIndex = 3;
             this.button4.Text = "历史记录";
-            this.button4.UseVisualStyleBackColor = true;
+            this.button4.UseVisualStyleBackColor = false;
+            this.button4.BackColor = System.Drawing.Color.FromArgb(16, 26, 46);
+            this.button4.Margin = new System.Windows.Forms.Padding(0);
+            this.button4.FlatAppearance.BorderSize = 0;
+            this.button4.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(28, 45, 69);
+            this.button4.Cursor = System.Windows.Forms.Cursors.Hand;
             // 
             // button5
             // 
@@ -281,7 +308,12 @@ namespace My_Industrial_Monitoring_Platform
             this.button5.Size = new System.Drawing.Size(131, 48);
             this.button5.TabIndex = 4;
             this.button5.Text = "网络通讯";
-            this.button5.UseVisualStyleBackColor = true;
+            this.button5.UseVisualStyleBackColor = false;
+            this.button5.BackColor = System.Drawing.Color.FromArgb(16, 26, 46);
+            this.button5.Margin = new System.Windows.Forms.Padding(0);
+            this.button5.FlatAppearance.BorderSize = 0;
+            this.button5.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(28, 45, 69);
+            this.button5.Cursor = System.Windows.Forms.Cursors.Hand;
             // 
             // button7
             // 
@@ -295,6 +327,21 @@ namespace My_Industrial_Monitoring_Platform
             this.button7.TabIndex = 6;
             this.button7.Text = "用户管理";
             this.button7.UseVisualStyleBackColor = true;
+            this.button7.BackColor = System.Drawing.Color.FromArgb(32, 59, 91);
+            this.button7.Margin = new System.Windows.Forms.Padding(0);
+            this.button7.FlatAppearance.BorderSize = 0;
+            this.button7.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(32, 59, 91);
+            this.button7.Cursor = System.Windows.Forms.Cursors.Hand;
+            // 
+            // selectedNavIndicator
+            // 
+            this.selectedNavIndicator.BackColor = System.Drawing.Color.FromArgb(55, 130, 245);
+            this.selectedNavIndicator.Dock = System.Windows.Forms.DockStyle.Left;
+            this.selectedNavIndicator.Enabled = false;
+            this.selectedNavIndicator.Margin = new System.Windows.Forms.Padding(0);
+            this.selectedNavIndicator.Name = "selectedNavIndicator";
+            this.selectedNavIndicator.Size = new System.Drawing.Size(3, 54);
+            this.selectedNavIndicator.TabIndex = 7;
             // 
             // rootLayout
             // 
@@ -364,6 +411,7 @@ namespace My_Industrial_Monitoring_Platform
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Button button6;
         private System.Windows.Forms.Button button7;
+        private System.Windows.Forms.Panel selectedNavIndicator;
         private System.Windows.Forms.TableLayoutPanel rootLayout;
         private UserManagementPage userManagementPage;
     }
