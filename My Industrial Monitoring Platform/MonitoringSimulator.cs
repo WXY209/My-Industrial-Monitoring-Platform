@@ -4,25 +4,6 @@ using System.Collections.Generic;
 namespace My_Industrial_Monitoring_Platform
 {
     /// <summary>
-    /// 一台模拟设备在某个时刻产生的温度和压力读数。
-    /// </summary>
-    public sealed class SensorReading
-    {
-        public string DeviceId { get; private set; }
-        public DateTime Timestamp { get; private set; }
-        public double Temperature { get; private set; }
-        public double Pressure { get; private set; }
-
-        internal SensorReading(string deviceId, DateTime timestamp, double temperature, double pressure)
-        {
-            DeviceId = deviceId;
-            Timestamp = timestamp;
-            Temperature = temperature;
-            Pressure = pressure;
-        }
-    }
-
-    /// <summary>
     /// 为每台设备生成连续、平滑波动的模拟读数。
     /// </summary>
     public sealed class MonitoringSimulator

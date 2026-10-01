@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 
@@ -35,6 +37,7 @@ namespace My_Industrial_Monitoring_Platform
         private Button stopButton;
         private Button addDeviceButton;
         private Button deleteDeviceButton;
+        private Button restoreDeviceButton;
         private FlowLayoutPanel deviceTabs;
         private Label runSummary;
         private Label deviceSummary;
@@ -54,15 +57,86 @@ namespace My_Industrial_Monitoring_Platform
         private bool previousAlarm;
         private AlarmRecord activeAlarmRecord;
         private int currentAlarmPage = 1;
-        private int nextAlarmId = 1;
 
         public HomeOverviewPage()
         {
             BackColor = pageBackground;
             Padding = new Padding(10);
             BuildLayout();
+            Load += HomeOverviewPage_Load;
             simulationTimer.Tick += SimulationTimer_Tick;
             Disposed += (sender, e) => simulationTimer.Dispose();
+        }
+
+        private void HomeOverviewPage_Load(object sender, EventArgs e)
+        {
+            LoadSavedData();
+        }
+
+        private void LoadSavedData()
+        {
+            DataTable deviceTable = DeviceDB.GetActiveDevices();
+            devices.Clear();
+            deviceTabs.Controls.Clear();
+
+            foreach (DataRow row in deviceTable.Rows)
+                devices.Add(row["DeviceId"].ToString());
+
+            if (devices.Count == 0)
+            {
+                string defaultId = DeviceDB.GetNextDeviceId();
+                DeviceDB.AddDevice(defaultId, defaultId);
+                devices.Add(defaultId);
+            }
+
+            selectedDevice = devices[0];
+            foreach (string deviceId in devices)
+                AddDeviceTab(deviceId);
+
+            deviceSummary.Text = "设备: " + selectedDevice;
+            deviceCountSummary.Text = "设备数: " + devices.Count;
+            LoadSavedAlarms();
+            LoadSavedReadings(selectedDevice);
+            RenderDeviceHistory(selectedDevice);
+            ShowCachedDeviceSummary(selectedDevice);
+        }
+
+        private void LoadSavedReadings(string deviceId)
+        {
+            if (!readingsByDevice.ContainsKey(deviceId))
+                readingsByDevice.Add(deviceId, ReadingDB.GetRecentReadings(deviceId, 11));
+        }
+
+        private void LoadSavedAlarms()
+        {
+            alarmRecords.Clear();
+            activeAlarmRecord = null;
+            DataTable table = AlarmDB.GetLatestAlarms(MaximumAlarmRecords);
+            foreach (DataRow row in table.Rows)
+            {
+                DateTime startTime = DateTime.Parse(row["StartTime"].ToString(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                double temperature = Convert.ToDouble(row["Temperature"], CultureInfo.InvariantCulture);
+                double pressure = Convert.ToDouble(row["Pressure"], CultureInfo.InvariantCulture);
+                var record = new AlarmRecord
+                {
+                    Id = Convert.ToInt32(row["Id"]),
+                    Reading = new SensorReading(row["DeviceId"].ToString(), startTime, temperature, pressure),
+                    Reason = row["AlarmType"].ToString(),
+                    Peak = row["AlarmType"].ToString().Contains("温度")
+                        ? temperature.ToString("F2")
+                        : pressure.ToString("F2"),
+                    StartTime = startTime,
+                    EndTime = row["EndTime"] == DBNull.Value
+                        ? (DateTime?)null
+                        : DateTime.Parse(row["EndTime"].ToString(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+                };
+                alarmRecords.Add(record);
+                if (activeAlarmRecord == null && record.EndTime == null && row["Status"].ToString() == "处理中")
+                    activeAlarmRecord = record;
+            }
+
+            currentAlarmPage = 1;
+            RenderAlarmPage();
         }
 
         private void BuildLayout()
@@ -122,8 +196,11 @@ namespace My_Industrial_Monitoring_Platform
             deleteDeviceButton = CreateActionButton("× 删除设备", Color.FromArgb(100, 112, 130));
             addDeviceButton.Click += AddDevice_Click;
             deleteDeviceButton.Click += DeleteDevice_Click;
+            restoreDeviceButton = CreateActionButton("↻ 恢复设备", Color.FromArgb(100, 112, 130));
+            restoreDeviceButton.Click += RestoreDevice_Click;
             actions.Controls.Add(addDeviceButton);
             actions.Controls.Add(deleteDeviceButton);
+            actions.Controls.Add(restoreDeviceButton);
             toolbar.Controls.Add(actions, 0, 0);
 
             var summary = new FlowLayoutPanel
@@ -404,6 +481,7 @@ namespace My_Industrial_Monitoring_Platform
             refresh.FlatAppearance.BorderSize = 0;
             refresh.Click += (sender, e) => RenderAlarmPage();
             header.Controls.Add(refresh);
+
             layout.Controls.Add(header, 0, 0);
 
             var history = new DataGridView
@@ -515,7 +593,7 @@ namespace My_Industrial_Monitoring_Platform
 
             runSummary.Text = "运行: 1";
             simulationTimer.Start();
-            UpdateReading();
+            TryUpdateReading();
         }
 
         private void StopMonitoring_Click(object sender, System.EventArgs e)
@@ -546,11 +624,12 @@ namespace My_Industrial_Monitoring_Platform
                     SetDeviceButtonStyle(button, string.Equals((string)button.Tag, deviceId, StringComparison.OrdinalIgnoreCase));
             }
 
+            LoadSavedReadings(selectedDevice);
             RenderDeviceHistory(selectedDevice);
             previousAlarm = false;
 
             if (simulationTimer.Enabled)
-                UpdateReading();
+                TryUpdateReading();
             else
                 ShowCachedDeviceSummary(selectedDevice);
         }
@@ -567,19 +646,13 @@ namespace My_Industrial_Monitoring_Platform
 
         private void AddDevice_Click(object sender, EventArgs e)
         {
-            int number = 1;
-            foreach (string deviceId in devices)
+            string newDeviceId = DeviceDB.GetNextDeviceId();
+            if (!DeviceDB.AddDevice(newDeviceId, newDeviceId))
             {
-                int parsedNumber;
-                if (deviceId.StartsWith("DEV-", StringComparison.OrdinalIgnoreCase)
-                    && int.TryParse(deviceId.Substring(4), out parsedNumber)
-                    && parsedNumber >= number)
-                {
-                    number = parsedNumber + 1;
-                }
+                MessageBox.Show("设备编号已存在，请重试。", "添加失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
 
-            string newDeviceId = "DEV-" + number.ToString("D3");
             devices.Add(newDeviceId);
             AddDeviceTab(newDeviceId);
             deviceCountSummary.Text = "设备数: " + devices.Count;
@@ -603,6 +676,17 @@ namespace My_Industrial_Monitoring_Platform
                 return;
 
             string removedDevice = selectedDevice;
+            if (DeviceDB.GetActiveCount() <= 1)
+            {
+                MessageBox.Show("至少需要保留一台正常设备。", "无法删除", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            if (!DeviceDB.SetDeleted(removedDevice, true))
+            {
+                MessageBox.Show("数据库没有更新该设备，请重试。", "删除失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             CloseActiveAlarm(DateTime.Now);
             previousAlarm = false;
             devices.Remove(removedDevice);
@@ -625,14 +709,127 @@ namespace My_Industrial_Monitoring_Platform
             SelectDevice(devices[0]);
         }
 
+        private void RestoreDevice_Click(object sender, EventArgs e)
+        {
+            DataTable deletedDevices = DeviceDB.GetDeletedDevices();
+            if (deletedDevices.Rows.Count == 0)
+            {
+                MessageBox.Show(FindForm(), "目前没有已删除的设备。", "设备恢复", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (var dialog = new Form
+            {
+                Text = "恢复已删除设备",
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ShowInTaskbar = false,
+                ClientSize = new Size(520, 340),
+                Font = new Font("微软雅黑", 9F)
+            })
+            {
+                var layout = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    ColumnCount = 1,
+                    RowCount = 2,
+                    Padding = new Padding(10)
+                };
+                layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+                layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
+
+                var grid = new DataGridView
+                {
+                    Dock = DockStyle.Fill,
+                    ReadOnly = true,
+                    AllowUserToAddRows = false,
+                    AllowUserToDeleteRows = false,
+                    AllowUserToResizeRows = false,
+                    RowHeadersVisible = false,
+                    SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                    MultiSelect = false,
+                    AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                    BackgroundColor = Color.White
+                };
+                grid.Columns.Add("DeviceId", "设备编号");
+                grid.Columns.Add("Name", "设备名称");
+                grid.Columns.Add("DeletedAt", "删除时间");
+
+                foreach (DataRow row in deletedDevices.Rows)
+                {
+                    string deletedAt = string.IsNullOrWhiteSpace(row["DeletedAt"].ToString())
+                        ? string.Empty
+                        : DateTime.Parse(row["DeletedAt"].ToString(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+                            .ToString("yyyy-MM-dd HH:mm:ss");
+                    grid.Rows.Add(row["DeviceId"], row["Name"], deletedAt);
+                }
+                layout.Controls.Add(grid, 0, 0);
+
+                var footer = new FlowLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    FlowDirection = FlowDirection.RightToLeft,
+                    WrapContents = false
+                };
+                var closeButton = new Button { Text = "关闭", AutoSize = true };
+                var restoreButton = new Button { Text = "恢复所选设备", AutoSize = true };
+                restoreButton.Click += (restoreSender, restoreArgs) =>
+                {
+                    if (grid.CurrentRow == null)
+                    {
+                        MessageBox.Show(dialog, "请先选择一台已删除的设备。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+
+                    string deviceId = Convert.ToString(grid.CurrentRow.Cells[0].Value);
+                    if (!DeviceDB.SetDeleted(deviceId, false))
+                    {
+                        MessageBox.Show(dialog, "恢复失败，请重试。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    devices.Add(deviceId);
+                    AddDeviceTab(deviceId);
+                    deviceCountSummary.Text = "设备数: " + devices.Count;
+                    SelectDevice(deviceId);
+                    dialog.Close();
+                };
+                closeButton.Click += (closeSender, closeArgs) => dialog.Close();
+                footer.Controls.Add(closeButton);
+                footer.Controls.Add(restoreButton);
+                layout.Controls.Add(footer, 0, 1);
+                dialog.Controls.Add(layout);
+
+                dialog.ShowDialog(FindForm());
+            }
+        }
+
         private void SimulationTimer_Tick(object sender, System.EventArgs e)
         {
-            UpdateReading();
+            TryUpdateReading();
+        }
+
+        private void TryUpdateReading()
+        {
+            try
+            {
+                UpdateReading();
+            }
+            catch (Exception ex)
+            {
+                simulationTimer.Stop();
+                runSummary.Text = "运行: 0";
+                MessageBox.Show("保存监控数据失败，监控已停止。\r\n" + ex.Message,
+                    "数据库错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void UpdateReading()
         {
             SensorReading reading = simulator.NextReading(selectedDevice);
+            ReadingDB.AddReading(reading);
 
             List<SensorReading> deviceReadings;
             if (!readingsByDevice.TryGetValue(selectedDevice, out deviceReadings))
@@ -726,7 +923,10 @@ namespace My_Industrial_Monitoring_Platform
         private void CloseActiveAlarm(DateTime endTime)
         {
             if (activeAlarmRecord != null)
+            {
                 activeAlarmRecord.EndTime = endTime;
+                AlarmDB.CloseAlarm(activeAlarmRecord.Id, endTime);
+            }
 
             activeAlarmRecord = null;
             RenderAlarmPage();
@@ -740,7 +940,7 @@ namespace My_Industrial_Monitoring_Platform
 
             var alarm = new AlarmRecord
             {
-                Id = nextAlarmId++,
+                Id = AlarmDB.AddAlarm(reading, reason, 60.0, 1.8),
                 Reading = reading,
                 Reason = reason,
                 Peak = peak,

@@ -73,9 +73,14 @@
     <Compile Include="HomeOverviewPage.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="AlarmDB.cs" />
+    <Compile Include="DatabaseDB.cs" />
+    <Compile Include="DeviceDB.cs" />
     <Compile Include="MonitoringSimulator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReadingDB.cs" />
+    <Compile Include="SensorReading.cs" />
     <Compile Include="UserDB.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
