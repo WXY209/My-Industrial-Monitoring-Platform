@@ -84,6 +84,12 @@ namespace My_Industrial_Monitoring_Platform
                 Math.Round(state.Pressure, 2));
         }
 
+        public void RemoveDevice(string deviceId)
+        {
+            if (!string.IsNullOrWhiteSpace(deviceId))
+                states.Remove(deviceId);
+        }
+
         private static double Clamp(double value, double minimum, double maximum)
         {
             if (value < minimum) return minimum;

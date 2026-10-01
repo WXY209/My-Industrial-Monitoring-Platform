@@ -11,28 +11,50 @@ namespace My_Industrial_Monitoring_Platform
     /// </summary>
     public sealed class HomeOverviewPage : UserControl
     {
+        private sealed class AlarmRecord
+        {
+            public int Id;
+            public SensorReading Reading;
+            public string Reason;
+            public string Peak;
+            public DateTime StartTime;
+            public DateTime? EndTime;
+        }
+
+        private const int AlarmPageSize = 15;
+        private const int MaximumAlarmRecords = 75;
         private readonly Color pageBackground = Color.FromArgb(241, 245, 249);
         private readonly Color darkText = Color.FromArgb(44, 62, 80);
         private readonly MonitoringSimulator simulator = new MonitoringSimulator();
         private readonly Timer simulationTimer = new Timer { Interval = 1000 };
         private readonly Dictionary<string, List<SensorReading>> readingsByDevice =
             new Dictionary<string, List<SensorReading>>(StringComparer.OrdinalIgnoreCase);
+        private readonly List<AlarmRecord> alarmRecords = new List<AlarmRecord>();
+        private readonly List<string> devices = new List<string> { "DEV-001" };
         private Button startButton;
         private Button stopButton;
-        private Button device006Button;
-        private Button device007Button;
+        private Button addDeviceButton;
+        private Button deleteDeviceButton;
+        private FlowLayoutPanel deviceTabs;
         private Label runSummary;
         private Label deviceSummary;
+        private Label deviceCountSummary;
         private Label temperatureSummary;
         private Label pressureSummary;
         private Label statusBanner;
         private Chart temperatureChart;
         private Chart pressureChart;
         private DataGridView historyGrid;
-        private string selectedDevice = "DEV-006";
+        private Button firstAlarmPageButton;
+        private Button previousAlarmPageButton;
+        private Button nextAlarmPageButton;
+        private Button lastAlarmPageButton;
+        private Label alarmPageInfo;
+        private string selectedDevice = "DEV-001";
         private bool previousAlarm;
-        private DataGridViewRow activeAlarmRow;
-        private int nextAlarmId = 37;
+        private AlarmRecord activeAlarmRecord;
+        private int currentAlarmPage = 1;
+        private int nextAlarmId = 1;
 
         public HomeOverviewPage()
         {
@@ -96,8 +118,12 @@ namespace My_Industrial_Monitoring_Platform
             stopButton.Click += StopMonitoring_Click;
             actions.Controls.Add(startButton);
             actions.Controls.Add(stopButton);
-            actions.Controls.Add(CreateActionButton("＋ 添加设备", Color.FromArgb(55, 130, 245)));
-            actions.Controls.Add(CreateActionButton("× 删除设备", Color.FromArgb(100, 112, 130)));
+            addDeviceButton = CreateActionButton("＋ 添加设备", Color.FromArgb(55, 130, 245));
+            deleteDeviceButton = CreateActionButton("× 删除设备", Color.FromArgb(100, 112, 130));
+            addDeviceButton.Click += AddDevice_Click;
+            deleteDeviceButton.Click += DeleteDevice_Click;
+            actions.Controls.Add(addDeviceButton);
+            actions.Controls.Add(deleteDeviceButton);
             toolbar.Controls.Add(actions, 0, 0);
 
             var summary = new FlowLayoutPanel
@@ -110,11 +136,12 @@ namespace My_Industrial_Monitoring_Platform
                 Margin = Padding.Empty
             };
             runSummary = CreateSummaryLabel("运行: 0", Color.FromArgb(55, 130, 245));
-            deviceSummary = CreateSummaryLabel("设备: DEV-006", darkText);
+            deviceSummary = CreateSummaryLabel("设备: DEV-001", darkText);
             temperatureSummary = CreateSummaryLabel("温度: -- °C", Color.FromArgb(239, 83, 80));
             pressureSummary = CreateSummaryLabel("压力: -- MPa", Color.FromArgb(55, 130, 245));
+            deviceCountSummary = CreateSummaryLabel("设备数: 1", Color.FromArgb(16, 185, 129));
             summary.Controls.Add(runSummary);
-            summary.Controls.Add(CreateSummaryLabel("设备数: 2", Color.FromArgb(16, 185, 129)));
+            summary.Controls.Add(deviceCountSummary);
             summary.Controls.Add(pressureSummary);
             summary.Controls.Add(temperatureSummary);
             summary.Controls.Add(deviceSummary);
@@ -170,22 +197,26 @@ namespace My_Industrial_Monitoring_Platform
 
         private Control BuildDeviceTabs()
         {
-            var tabs = new FlowLayoutPanel
+            deviceTabs = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
+                AutoScroll = true,
                 BackColor = pageBackground,
                 Margin = Padding.Empty,
                 Padding = new Padding(0, 2, 0, 0)
             };
-            device006Button = CreateDeviceButton("▦  DEV-006", true);
-            device007Button = CreateDeviceButton("▦  DEV-007", false);
-            device006Button.Click += (sender, e) => SelectDevice("DEV-006");
-            device007Button.Click += (sender, e) => SelectDevice("DEV-007");
-            tabs.Controls.Add(device006Button);
-            tabs.Controls.Add(device007Button);
-            return tabs;
+            AddDeviceTab("DEV-001");
+            return deviceTabs;
+        }
+
+        private void AddDeviceTab(string deviceId)
+        {
+            var button = CreateDeviceButton("▦  " + deviceId, deviceId == selectedDevice);
+            button.Tag = deviceId;
+            button.Click += (sender, e) => SelectDevice((string)((Button)sender).Tag);
+            deviceTabs.Controls.Add(button);
         }
 
         private static Button CreateDeviceButton(string text, bool selected)
@@ -371,6 +402,7 @@ namespace My_Industrial_Monitoring_Platform
                 Cursor = Cursors.Hand
             };
             refresh.FlatAppearance.BorderSize = 0;
+            refresh.Click += (sender, e) => RenderAlarmPage();
             header.Controls.Add(refresh);
             layout.Controls.Add(header, 0, 0);
 
@@ -421,11 +453,6 @@ namespace My_Industrial_Monitoring_Platform
                 });
             }
 
-            history.Rows.Add("36", "DEV-006", "温度+压力", "64.57", "温度 60.0 °C + 压力超标", "10-01 11:16:21", "10-01 11:16:24");
-            history.Rows.Add("35", "DEV-007", "温度+压力", "61.60", "温度 60.0 °C + 压力超标", "10-01 11:16:14", "10-01 11:16:20");
-            history.Rows.Add("34", "DEV-006", "温度", "61.62", "温度超过 60.0 °C", "10-01 11:16:10", "10-01 11:16:16");
-            history.Rows.Add("33", "DEV-007", "温度+压力", "62.86", "温度 60.0 °C + 压力超标", "10-01 11:15:53", "10-01 11:15:58");
-            history.Rows.Add("32", "DEV-006", "温度", "66.86", "温度超过 60.0 °C", "10-01 11:15:10", "10-01 11:15:13");
             layout.Controls.Add(history, 0, 1);
 
             var footer = new FlowLayoutPanel
@@ -437,19 +464,29 @@ namespace My_Industrial_Monitoring_Platform
                 Padding = new Padding(0, 2, 0, 0),
                 Margin = Padding.Empty
             };
-            footer.Controls.Add(CreatePageButton("末页 ▶▶"));
-            footer.Controls.Add(CreatePageButton("▶"));
-            footer.Controls.Add(new Label
+            lastAlarmPageButton = CreatePageButton("末页 ▶▶");
+            nextAlarmPageButton = CreatePageButton("▶");
+            previousAlarmPageButton = CreatePageButton("◀");
+            firstAlarmPageButton = CreatePageButton("首页 ◀◀");
+            lastAlarmPageButton.Click += (sender, e) => ChangeAlarmPage(GetAlarmPageCount());
+            nextAlarmPageButton.Click += (sender, e) => ChangeAlarmPage(currentAlarmPage + 1);
+            previousAlarmPageButton.Click += (sender, e) => ChangeAlarmPage(currentAlarmPage - 1);
+            firstAlarmPageButton.Click += (sender, e) => ChangeAlarmPage(1);
+            footer.Controls.Add(lastAlarmPageButton);
+            footer.Controls.Add(nextAlarmPageButton);
+            alarmPageInfo = new Label
             {
-                Text = "第 1/1 页（共 5 条）",
+                Text = "第 1/1 页（共 0 条）",
                 AutoSize = true,
                 ForeColor = Color.Gray,
                 Font = new Font("微软雅黑", 8F),
                 Margin = new Padding(8, 7, 8, 0)
-            });
-            footer.Controls.Add(CreatePageButton("◀"));
-            footer.Controls.Add(CreatePageButton("首页 ◀◀"));
+            };
+            footer.Controls.Add(alarmPageInfo);
+            footer.Controls.Add(previousAlarmPageButton);
+            footer.Controls.Add(firstAlarmPageButton);
             layout.Controls.Add(footer, 0, 2);
+            UpdateAlarmPager();
 
             return card;
         }
@@ -495,15 +532,19 @@ namespace My_Industrial_Monitoring_Platform
 
         private void SelectDevice(string deviceId)
         {
-            if (deviceId == selectedDevice)
+            if (string.Equals(deviceId, selectedDevice, StringComparison.OrdinalIgnoreCase))
                 return;
 
             CloseActiveAlarm(DateTime.Now);
             selectedDevice = deviceId;
             deviceSummary.Text = "设备: " + selectedDevice;
 
-            SetDeviceButtonStyle(device006Button, deviceId == "DEV-006");
-            SetDeviceButtonStyle(device007Button, deviceId == "DEV-007");
+            foreach (Control control in deviceTabs.Controls)
+            {
+                var button = control as Button;
+                if (button != null)
+                    SetDeviceButtonStyle(button, string.Equals((string)button.Tag, deviceId, StringComparison.OrdinalIgnoreCase));
+            }
 
             RenderDeviceHistory(selectedDevice);
             previousAlarm = false;
@@ -522,6 +563,66 @@ namespace My_Industrial_Monitoring_Platform
             button.ForeColor = selected
                 ? Color.FromArgb(55, 130, 245)
                 : Color.FromArgb(60, 70, 85);
+        }
+
+        private void AddDevice_Click(object sender, EventArgs e)
+        {
+            int number = 1;
+            foreach (string deviceId in devices)
+            {
+                int parsedNumber;
+                if (deviceId.StartsWith("DEV-", StringComparison.OrdinalIgnoreCase)
+                    && int.TryParse(deviceId.Substring(4), out parsedNumber)
+                    && parsedNumber >= number)
+                {
+                    number = parsedNumber + 1;
+                }
+            }
+
+            string newDeviceId = "DEV-" + number.ToString("D3");
+            devices.Add(newDeviceId);
+            AddDeviceTab(newDeviceId);
+            deviceCountSummary.Text = "设备数: " + devices.Count;
+            SelectDevice(newDeviceId);
+        }
+
+        private void DeleteDevice_Click(object sender, EventArgs e)
+        {
+            if (devices.Count <= 1)
+            {
+                MessageBox.Show("至少需要保留一台设备。", "无法删除", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            DialogResult result = MessageBox.Show(
+                "确定删除当前设备 " + selectedDevice + " 吗？",
+                "确认删除设备",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+            if (result != DialogResult.Yes)
+                return;
+
+            string removedDevice = selectedDevice;
+            CloseActiveAlarm(DateTime.Now);
+            previousAlarm = false;
+            devices.Remove(removedDevice);
+            readingsByDevice.Remove(removedDevice);
+            simulator.RemoveDevice(removedDevice);
+
+            for (int i = deviceTabs.Controls.Count - 1; i >= 0; i--)
+            {
+                var button = deviceTabs.Controls[i] as Button;
+                if (button != null && string.Equals((string)button.Tag, removedDevice, StringComparison.OrdinalIgnoreCase))
+                {
+                    deviceTabs.Controls.RemoveAt(i);
+                    button.Dispose();
+                    break;
+                }
+            }
+
+            deviceCountSummary.Text = "设备数: " + devices.Count;
+            selectedDevice = string.Empty;
+            SelectDevice(devices[0]);
         }
 
         private void SimulationTimer_Tick(object sender, System.EventArgs e)
@@ -570,10 +671,8 @@ namespace My_Industrial_Monitoring_Platform
                 statusBanner.BackColor = Color.FromArgb(226, 232, 240);
                 statusBanner.ForeColor = darkText;
 
-                if (previousAlarm && activeAlarmRow != null && !activeAlarmRow.IsNewRow)
-                {
+                if (previousAlarm && activeAlarmRecord != null)
                     CloseActiveAlarm(reading.Timestamp);
-                }
             }
 
             previousAlarm = alarm;
@@ -626,10 +725,11 @@ namespace My_Industrial_Monitoring_Platform
 
         private void CloseActiveAlarm(DateTime endTime)
         {
-            if (activeAlarmRow != null && !activeAlarmRow.IsNewRow)
-                activeAlarmRow.Cells[6].Value = endTime.ToString("MM-dd HH:mm:ss");
+            if (activeAlarmRecord != null)
+                activeAlarmRecord.EndTime = endTime;
 
-            activeAlarmRow = null;
+            activeAlarmRecord = null;
+            RenderAlarmPage();
         }
 
         private void AddAlarmRow(SensorReading reading, string reason)
@@ -638,21 +738,89 @@ namespace My_Industrial_Monitoring_Platform
                 ? reading.Temperature.ToString("F2")
                 : reading.Pressure.ToString("F2");
 
-            historyGrid.Rows.Insert(
-                0,
-                nextAlarmId.ToString(),
-                reading.DeviceId,
-                reason,
-                peak,
-                "温度阈值 60.0 °C / 压力阈值 1.8 MPa",
-                reading.Timestamp.ToString("MM-dd HH:mm:ss"),
-                "处理中");
+            var alarm = new AlarmRecord
+            {
+                Id = nextAlarmId++,
+                Reading = reading,
+                Reason = reason,
+                Peak = peak,
+                StartTime = reading.Timestamp
+            };
+            alarmRecords.Insert(0, alarm);
+            activeAlarmRecord = alarm;
 
-            activeAlarmRow = historyGrid.Rows[0];
-            nextAlarmId++;
+            if (alarmRecords.Count > MaximumAlarmRecords)
+                alarmRecords.RemoveAt(alarmRecords.Count - 1);
 
-            while (historyGrid.Rows.Count > 30)
-                historyGrid.Rows.RemoveAt(historyGrid.Rows.Count - 1);
+            // 新报警加入列表顶部，切回第一页让它立即可见。
+            currentAlarmPage = 1;
+            RenderAlarmPage();
+        }
+
+        private int GetAlarmPageCount()
+        {
+            return Math.Max(1, (int)Math.Ceiling(alarmRecords.Count / (double)AlarmPageSize));
+        }
+
+        private void ChangeAlarmPage(int page)
+        {
+            currentAlarmPage = Math.Max(1, Math.Min(page, GetAlarmPageCount()));
+            RenderAlarmPage();
+        }
+
+        private void RenderAlarmPage()
+        {
+            if (historyGrid == null)
+                return;
+
+            int pageCount = GetAlarmPageCount();
+            currentAlarmPage = Math.Max(1, Math.Min(currentAlarmPage, pageCount));
+            int startIndex = (currentAlarmPage - 1) * AlarmPageSize;
+            int endIndex = Math.Min(startIndex + AlarmPageSize, alarmRecords.Count);
+
+            historyGrid.Rows.Clear();
+            activeAlarmRecord = activeAlarmRecord != null && alarmRecords.Contains(activeAlarmRecord)
+                ? activeAlarmRecord
+                : null;
+
+            for (int i = startIndex; i < endIndex; i++)
+            {
+                AlarmRecord alarm = alarmRecords[i];
+                string endTime = alarm.EndTime.HasValue
+                    ? alarm.EndTime.Value.ToString("MM-dd HH:mm:ss")
+                    : "处理中";
+
+                int rowIndex = historyGrid.Rows.Add(
+                    alarm.Id.ToString(),
+                    alarm.Reading.DeviceId,
+                    alarm.Reason,
+                    alarm.Peak,
+                    "温度阈值 60.0 °C / 压力阈值 1.8 MPa",
+                    alarm.StartTime.ToString("MM-dd HH:mm:ss"),
+                    endTime);
+
+                if (ReferenceEquals(alarm, activeAlarmRecord))
+                    historyGrid.Rows[rowIndex].DefaultCellStyle.ForeColor = Color.FromArgb(220, 38, 38);
+            }
+
+            UpdateAlarmPager();
+        }
+
+        private void UpdateAlarmPager()
+        {
+            if (alarmPageInfo == null)
+                return;
+
+            int pageCount = GetAlarmPageCount();
+            alarmPageInfo.Text = "第 " + currentAlarmPage + "/" + pageCount
+                + " 页（共 " + alarmRecords.Count + " 条）";
+            firstAlarmPageButton.Enabled = previousAlarmPageButton.Enabled = currentAlarmPage > 1;
+            nextAlarmPageButton.Enabled = lastAlarmPageButton.Enabled = currentAlarmPage < pageCount;
+
+            Color enabledColor = Color.FromArgb(55, 130, 245);
+            Color disabledColor = Color.FromArgb(180, 190, 205);
+            firstAlarmPageButton.BackColor = previousAlarmPageButton.BackColor = currentAlarmPage > 1 ? enabledColor : disabledColor;
+            nextAlarmPageButton.BackColor = lastAlarmPageButton.BackColor = currentAlarmPage < pageCount ? enabledColor : disabledColor;
         }
     }
 }
