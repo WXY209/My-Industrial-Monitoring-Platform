@@ -7,8 +7,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 namespace My_Industrial_Monitoring_Platform
 {
     /// <summary>
-    /// 首页总览 / 实时监控的界面布局。当前图表用于显示阈值和坐标，
-    /// 历史报警表为界面示例数据；设备通讯与数据刷新后续再接入。
+    /// 首页总览 / 实时监控界面，使用模拟设备数据动态更新曲线。
     /// </summary>
     public sealed class HomeOverviewPage : UserControl
     {
@@ -220,8 +219,8 @@ namespace My_Industrial_Monitoring_Platform
             chartLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             chartLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             chartLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            chartLayout.Controls.Add(CreateChartCard("▦  实时温度 (°C)", 55, 95, 5, 85, Color.Red, "°C", Color.Red, out temperatureChart), 0, 0);
-            chartLayout.Controls.Add(CreateChartCard("▦  实时压力 (MPa)", 1.5, 2.7, 0.1, 2.4, Color.FromArgb(255, 153, 51), "MPa", Color.Blue, out pressureChart), 1, 0);
+            chartLayout.Controls.Add(CreateChartCard("▦  实时温度 (°C)", 30, 70, 5, 60, Color.Red, "°C", Color.Red, out temperatureChart), 0, 0);
+            chartLayout.Controls.Add(CreateChartCard("▦  实时压力 (MPa)", 0.8, 2.2, 0.1, 1.8, Color.FromArgb(255, 153, 51), "MPa", Color.Blue, out pressureChart), 1, 0);
             return chartLayout;
         }
 
@@ -282,7 +281,7 @@ namespace My_Industrial_Monitoring_Platform
             area.AxisX.Minimum = 0;
             area.AxisX.Maximum = 10;
             area.AxisX.Interval = 0.5;
-            area.AxisX.IsReversed = true;
+            area.AxisX.IsReversed = false;
             area.AxisX.MajorGrid.Enabled = false;
             area.AxisX.LabelStyle.ForeColor = Color.Gray;
             area.AxisX.LabelStyle.Font = new Font("微软雅黑", 7.5F);
@@ -422,11 +421,11 @@ namespace My_Industrial_Monitoring_Platform
                 });
             }
 
-            history.Rows.Add("36", "DEV-006", "温度+压力", "94.57", "温度 85.0 °C + 压力超标", "10-01 11:16:21", "10-01 11:16:24");
-            history.Rows.Add("35", "DEV-007", "温度+压力", "91.60", "温度 85.0 °C + 压力超标", "10-01 11:16:14", "10-01 11:16:20");
-            history.Rows.Add("34", "DEV-006", "温度", "91.62", "温度超过 85.0 °C", "10-01 11:16:10", "10-01 11:16:16");
-            history.Rows.Add("33", "DEV-007", "温度+压力", "92.86", "温度 85.0 °C + 压力超标", "10-01 11:15:53", "10-01 11:15:58");
-            history.Rows.Add("32", "DEV-006", "温度", "86.86", "温度超过 85.0 °C", "10-01 11:15:10", "10-01 11:15:13");
+            history.Rows.Add("36", "DEV-006", "温度+压力", "64.57", "温度 60.0 °C + 压力超标", "10-01 11:16:21", "10-01 11:16:24");
+            history.Rows.Add("35", "DEV-007", "温度+压力", "61.60", "温度 60.0 °C + 压力超标", "10-01 11:16:14", "10-01 11:16:20");
+            history.Rows.Add("34", "DEV-006", "温度", "61.62", "温度超过 60.0 °C", "10-01 11:16:10", "10-01 11:16:16");
+            history.Rows.Add("33", "DEV-007", "温度+压力", "62.86", "温度 60.0 °C + 压力超标", "10-01 11:15:53", "10-01 11:15:58");
+            history.Rows.Add("32", "DEV-006", "温度", "66.86", "温度超过 60.0 °C", "10-01 11:15:10", "10-01 11:15:13");
             layout.Controls.Add(history, 0, 1);
 
             var footer = new FlowLayoutPanel
@@ -549,8 +548,8 @@ namespace My_Industrial_Monitoring_Platform
             pressureSummary.Text = "压力: " + reading.Pressure.ToString("F2") + " MPa";
             RenderDeviceHistory(selectedDevice);
 
-            bool temperatureAlarm = reading.Temperature >= 85.0;
-            bool pressureAlarm = reading.Pressure >= 2.4;
+            bool temperatureAlarm = reading.Temperature >= 60.0;
+            bool pressureAlarm = reading.Pressure >= 1.8;
             bool alarm = temperatureAlarm || pressureAlarm;
 
             if (alarm)
@@ -613,7 +612,7 @@ namespace My_Industrial_Monitoring_Platform
             temperatureSummary.Text = "温度: " + latest.Temperature.ToString("F2") + " °C";
             pressureSummary.Text = "压力: " + latest.Pressure.ToString("F2") + " MPa";
 
-            bool alarm = latest.Temperature >= 85.0 || latest.Pressure >= 2.4;
+            bool alarm = latest.Temperature >= 60.0 || latest.Pressure >= 1.8;
             statusBanner.Text = alarm
                 ? "⚠  " + deviceId + " 上次读数超限（监控已停止）"
                 : "●  " + deviceId + " 已显示保留数据（监控已停止）";
@@ -645,7 +644,7 @@ namespace My_Industrial_Monitoring_Platform
                 reading.DeviceId,
                 reason,
                 peak,
-                "温度阈值 85.0 °C / 压力阈值 2.4 MPa",
+                "温度阈值 60.0 °C / 压力阈值 1.8 MPa",
                 reading.Timestamp.ToString("MM-dd HH:mm:ss"),
                 "处理中");
 
