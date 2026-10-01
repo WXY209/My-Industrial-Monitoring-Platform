@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace My_Industrial_Monitoring_Platform
@@ -20,7 +21,29 @@ namespace My_Industrial_Monitoring_Platform
         {
             InitializeComponent();
             idlable_UI.Text = username;
+            button1.Click += (sender, e) => ShowPage(homeOverviewPage, button1, "首页总览");
+            button7.Click += (sender, e) => ShowPage(userManagementPage, button7, "用户管理");
+            ShowPage(homeOverviewPage, button1, "首页总览");
             StartClock();
+        }
+
+        private void ShowPage(Control page, Button selectedButton, string pageName)
+        {
+            homeOverviewPage.Visible = page == homeOverviewPage;
+            userManagementPage.Visible = page == userManagementPage;
+            page.BringToFront();
+            namelabel_UI.Text = pageName;
+
+            button1.BackColor = page == homeOverviewPage
+                ? Color.FromArgb(32, 59, 91)
+                : Color.FromArgb(16, 26, 46);
+            button7.BackColor = page == userManagementPage
+                ? Color.FromArgb(32, 59, 91)
+                : Color.FromArgb(16, 26, 46);
+
+            selectedNavIndicator.Parent = selectedButton;
+            selectedNavIndicator.Dock = DockStyle.Left;
+            selectedNavIndicator.BringToFront();
         }
         /// <summary>
         /// 顶部导航栏时间显示
