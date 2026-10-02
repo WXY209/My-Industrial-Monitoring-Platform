@@ -237,6 +237,9 @@ ClientBin/
 ~$*
 *~
 *.dbmdl
+user.db
+user.db-shm
+user.db-wal
 *.dbproj.schemaview
 *.jfm
 *.pfx

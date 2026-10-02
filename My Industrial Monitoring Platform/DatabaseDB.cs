@@ -10,10 +10,24 @@ namespace My_Industrial_Monitoring_Platform
     internal static class DatabaseDB
     {
         private static readonly string DatabasePath = Path.Combine(
-            Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..")),
+            FindSolutionDirectory(),
             "user.db");
 
         private static readonly string ConnectionString = "Data Source=" + DatabasePath + ";Version=3";
+
+        private static string FindSolutionDirectory()
+        {
+            DirectoryInfo directory = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
+            while (directory != null)
+            {
+                if (Directory.GetFiles(directory.FullName, "*.sln").Length > 0)
+                    return directory.FullName;
+                directory = directory.Parent;
+            }
+
+            // 发布后找不到解决方案文件时，把数据库放在程序所在目录。
+            return AppDomain.CurrentDomain.BaseDirectory;
+        }
 
         public static SQLiteConnection OpenConnection()
         {
