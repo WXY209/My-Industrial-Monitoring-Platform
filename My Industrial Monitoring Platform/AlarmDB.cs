@@ -74,6 +74,41 @@ namespace My_Industrial_Monitoring_Platform
             return table;
         }
 
+        public static DataTable GetAlarmPage(string alarmType, int page, int pageSize)
+        {
+            var table = new DataTable();
+            int offset = Math.Max(0, page - 1) * pageSize;
+            using (var connection = DatabaseDB.OpenConnection())
+            using (var command = new SQLiteCommand(@"
+                SELECT Id AS [编号], DeviceId AS [设备], AlarmType AS [报警类型],
+                       CASE WHEN instr(AlarmType, '+') > 0
+                            THEN printf('%.2f°C / %.2fMPa', Temperature, Pressure)
+                            WHEN instr(AlarmType, '温度') > 0 THEN printf('%.2f°C', Temperature)
+                            ELSE printf('%.2fMPa', Pressure) END AS [报警值],
+                       StartTime AS [开始时间], EndTime AS [结束时间], Status AS [状态]
+                FROM Alarms
+                WHERE (@type = '' OR AlarmType = @type)
+                ORDER BY Id DESC LIMIT @limit OFFSET @offset;", connection))
+            {
+                command.Parameters.AddWithValue("@type", alarmType ?? string.Empty);
+                command.Parameters.AddWithValue("@limit", pageSize);
+                command.Parameters.AddWithValue("@offset", offset);
+                using (var adapter = new SQLiteDataAdapter(command)) adapter.Fill(table);
+            }
+            return table;
+        }
+
+        public static int GetAlarmCount(string alarmType)
+        {
+            using (var connection = DatabaseDB.OpenConnection())
+            using (var command = new SQLiteCommand(
+                "SELECT COUNT(*) FROM Alarms WHERE (@type = '' OR AlarmType = @type);", connection))
+            {
+                command.Parameters.AddWithValue("@type", alarmType ?? string.Empty);
+                return Convert.ToInt32(command.ExecuteScalar());
+            }
+        }
+
         public static string FormatTime(object value)
         {
             return value == null || value == DBNull.Value

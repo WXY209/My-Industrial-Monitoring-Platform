@@ -1,6 +1,8 @@
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.Windows.Forms;
@@ -74,7 +76,27 @@ namespace My_Industrial_Monitoring_Platform
 
         private void HomeOverviewPage_Load(object sender, EventArgs e)
         {
+            if (IsDesignTime())
+                return;
+
             LoadSavedData();
+        }
+
+        private bool IsDesignTime()
+        {
+            if (LicenseManager.UsageMode == LicenseUsageMode.Designtime || DesignMode)
+                return true;
+
+            for (Control control = this; control != null; control = control.Parent)
+            {
+                if (control.Site != null && control.Site.DesignMode)
+                    return true;
+            }
+
+            string processName = Process.GetCurrentProcess().ProcessName;
+            return processName.Equals("devenv", StringComparison.OrdinalIgnoreCase)
+                || processName.Equals("DesignToolsServer", StringComparison.OrdinalIgnoreCase)
+                || processName.Equals("XDesProc", StringComparison.OrdinalIgnoreCase);
         }
 
         private void LoadSavedData()

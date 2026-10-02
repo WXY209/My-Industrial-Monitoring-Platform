@@ -56,5 +56,43 @@ namespace My_Industrial_Monitoring_Platform
             }
             return readings;
         }
+
+        public static DataTable GetHistoryPage(DateTime startInclusive, DateTime endExclusive, string deviceId, int page, int pageSize)
+        {
+            var table = new DataTable();
+            int offset = Math.Max(0, page - 1) * pageSize;
+            using (var connection = DatabaseDB.OpenConnection())
+            using (var command = new SQLiteCommand(@"
+                SELECT Id AS [编号], DeviceId AS [设备], Timestamp AS [采样时间],
+                       Temperature AS [温度], Pressure AS [压力]
+                FROM Readings
+                WHERE Timestamp >= @start AND Timestamp < @end
+                  AND (@device = '' OR DeviceId = @device)
+                ORDER BY Id DESC LIMIT @limit OFFSET @offset;", connection))
+            {
+                command.Parameters.AddWithValue("@start", startInclusive.ToString("o", CultureInfo.InvariantCulture));
+                command.Parameters.AddWithValue("@end", endExclusive.ToString("o", CultureInfo.InvariantCulture));
+                command.Parameters.AddWithValue("@device", deviceId ?? string.Empty);
+                command.Parameters.AddWithValue("@limit", pageSize);
+                command.Parameters.AddWithValue("@offset", offset);
+                using (var adapter = new SQLiteDataAdapter(command)) adapter.Fill(table);
+            }
+            return table;
+        }
+
+        public static int GetHistoryCount(DateTime startInclusive, DateTime endExclusive, string deviceId)
+        {
+            using (var connection = DatabaseDB.OpenConnection())
+            using (var command = new SQLiteCommand(@"
+                SELECT COUNT(*) FROM Readings
+                WHERE Timestamp >= @start AND Timestamp < @end
+                  AND (@device = '' OR DeviceId = @device);", connection))
+            {
+                command.Parameters.AddWithValue("@start", startInclusive.ToString("o", CultureInfo.InvariantCulture));
+                command.Parameters.AddWithValue("@end", endExclusive.ToString("o", CultureInfo.InvariantCulture));
+                command.Parameters.AddWithValue("@device", deviceId ?? string.Empty);
+                return Convert.ToInt32(command.ExecuteScalar());
+            }
+        }
     }
 }

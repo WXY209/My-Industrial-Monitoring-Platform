@@ -29,13 +29,14 @@ namespace My_Industrial_Monitoring_Platform
             this.panel1 = new System.Windows.Forms.Panel();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
             this.button7 = new System.Windows.Forms.Button();
-            this.selectedNavIndicator = new System.Windows.Forms.Panel();
             this.button6 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.selectedNavIndicator = new System.Windows.Forms.Panel();
             this.button5 = new System.Windows.Forms.Button();
             this.rootLayout = new System.Windows.Forms.TableLayoutPanel();
-            this.userManagementPage = new My_Industrial_Monitoring_Platform.UserManagementPage();
             this.contentHost = new System.Windows.Forms.Panel();
+            this.dataRecordPage = new My_Industrial_Monitoring_Platform.DataRecordPage();
+            this.userManagementPage = new My_Industrial_Monitoring_Platform.UserManagementPage();
             this.homeOverviewPage = new My_Industrial_Monitoring_Platform.HomeOverviewPage();
             this.toppanel.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
@@ -43,7 +44,9 @@ namespace My_Industrial_Monitoring_Platform
             this.statusPanel.SuspendLayout();
             this.panel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
+            this.button1.SuspendLayout();
             this.rootLayout.SuspendLayout();
+            this.contentHost.SuspendLayout();
             this.SuspendLayout();
             // 
             // toppanel
@@ -206,11 +209,11 @@ namespace My_Industrial_Monitoring_Platform
             // 
             // button7
             // 
-            this.button7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(59)))), ((int)(((byte)(91)))));
+            this.button7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(26)))), ((int)(((byte)(46)))));
             this.button7.Cursor = System.Windows.Forms.Cursors.Hand;
             this.button7.Dock = System.Windows.Forms.DockStyle.Fill;
             this.button7.FlatAppearance.BorderSize = 0;
-            this.button7.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(59)))), ((int)(((byte)(91)))));
+            this.button7.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(45)))), ((int)(((byte)(69)))));
             this.button7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button7.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.button7.ForeColor = System.Drawing.SystemColors.ButtonFace;
@@ -221,19 +224,6 @@ namespace My_Industrial_Monitoring_Platform
             this.button7.TabIndex = 6;
             this.button7.Text = "用户管理";
             this.button7.UseVisualStyleBackColor = false;
-            this.button7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(26)))), ((int)(((byte)(46)))));
-            this.button7.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(45)))), ((int)(((byte)(69)))));
-            // 
-            // selectedNavIndicator
-            // 
-            this.selectedNavIndicator.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(130)))), ((int)(((byte)(245)))));
-            this.selectedNavIndicator.Dock = System.Windows.Forms.DockStyle.Left;
-            this.selectedNavIndicator.Enabled = false;
-            this.selectedNavIndicator.Location = new System.Drawing.Point(0, 208);
-            this.selectedNavIndicator.Margin = new System.Windows.Forms.Padding(0);
-            this.selectedNavIndicator.Name = "selectedNavIndicator";
-            this.selectedNavIndicator.Size = new System.Drawing.Size(3, 315);
-            this.selectedNavIndicator.TabIndex = 7;
             // 
             // button6
             // 
@@ -250,16 +240,17 @@ namespace My_Industrial_Monitoring_Platform
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(131, 52);
             this.button6.TabIndex = 5;
-            this.button6.Text = "系统设置";
+            this.button6.Text = "数据记录";
             this.button6.UseVisualStyleBackColor = false;
             // 
             // button1
             // 
-            this.button1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(26)))), ((int)(((byte)(46)))));
+            this.button1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(59)))), ((int)(((byte)(91)))));
+            this.button1.Controls.Add(this.selectedNavIndicator);
             this.button1.Cursor = System.Windows.Forms.Cursors.Hand;
             this.button1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.button1.FlatAppearance.BorderSize = 0;
-            this.button1.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(45)))), ((int)(((byte)(69)))));
+            this.button1.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(59)))), ((int)(((byte)(91)))));
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button1.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.button1.ForeColor = System.Drawing.SystemColors.ButtonFace;
@@ -270,9 +261,17 @@ namespace My_Industrial_Monitoring_Platform
             this.button1.TabIndex = 0;
             this.button1.Text = "首页总览";
             this.button1.UseVisualStyleBackColor = false;
-            this.button1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(59)))), ((int)(((byte)(91)))));
-            this.button1.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(59)))), ((int)(((byte)(91)))));
-            this.button1.Controls.Add(this.selectedNavIndicator);
+            // 
+            // selectedNavIndicator
+            // 
+            this.selectedNavIndicator.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(130)))), ((int)(((byte)(245)))));
+            this.selectedNavIndicator.Dock = System.Windows.Forms.DockStyle.Left;
+            this.selectedNavIndicator.Enabled = false;
+            this.selectedNavIndicator.Location = new System.Drawing.Point(0, 0);
+            this.selectedNavIndicator.Margin = new System.Windows.Forms.Padding(0);
+            this.selectedNavIndicator.Name = "selectedNavIndicator";
+            this.selectedNavIndicator.Size = new System.Drawing.Size(3, 52);
+            this.selectedNavIndicator.TabIndex = 7;
             // 
             // button5
             // 
@@ -311,13 +310,22 @@ namespace My_Industrial_Monitoring_Platform
             // 
             // contentHost
             // 
+            this.contentHost.Controls.Add(this.dataRecordPage);
+            this.contentHost.Controls.Add(this.userManagementPage);
+            this.contentHost.Controls.Add(this.homeOverviewPage);
             this.contentHost.Dock = System.Windows.Forms.DockStyle.Fill;
             this.contentHost.Location = new System.Drawing.Point(140, 43);
             this.contentHost.Name = "contentHost";
             this.contentHost.Size = new System.Drawing.Size(632, 523);
             this.contentHost.TabIndex = 0;
-            this.contentHost.Controls.Add(this.userManagementPage);
-            this.contentHost.Controls.Add(this.homeOverviewPage);
+            // 
+            // dataRecordPage
+            // 
+            this.dataRecordPage.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataRecordPage.Location = new System.Drawing.Point(0, 0);
+            this.dataRecordPage.Name = "dataRecordPage";
+            this.dataRecordPage.Size = new System.Drawing.Size(632, 523);
+            this.dataRecordPage.TabIndex = 2;
             // 
             // userManagementPage
             // 
@@ -332,12 +340,13 @@ namespace My_Industrial_Monitoring_Platform
             // 
             // homeOverviewPage
             // 
+            this.homeOverviewPage.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(241)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.homeOverviewPage.Dock = System.Windows.Forms.DockStyle.Fill;
             this.homeOverviewPage.Location = new System.Drawing.Point(0, 0);
             this.homeOverviewPage.Name = "homeOverviewPage";
+            this.homeOverviewPage.Padding = new System.Windows.Forms.Padding(10);
             this.homeOverviewPage.Size = new System.Drawing.Size(632, 523);
             this.homeOverviewPage.TabIndex = 1;
-            this.homeOverviewPage.Visible = true;
             // 
             // HMI
             // 
@@ -357,7 +366,9 @@ namespace My_Industrial_Monitoring_Platform
             this.statusPanel.PerformLayout();
             this.panel1.ResumeLayout(false);
             this.tableLayoutPanel2.ResumeLayout(false);
+            this.button1.ResumeLayout(false);
             this.rootLayout.ResumeLayout(false);
+            this.contentHost.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -384,6 +395,7 @@ namespace My_Industrial_Monitoring_Platform
         private System.Windows.Forms.TableLayoutPanel rootLayout;
         private UserManagementPage userManagementPage;
         private System.Windows.Forms.Panel contentHost;
+        private DataRecordPage dataRecordPage;
         private HomeOverviewPage homeOverviewPage;
     }
 }

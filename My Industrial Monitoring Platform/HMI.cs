@@ -22,6 +22,7 @@ namespace My_Industrial_Monitoring_Platform
             InitializeComponent();
             idlable_UI.Text = username;
             button1.Click += (sender, e) => ShowPage(homeOverviewPage, button1, "首页总览");
+            button6.Click += (sender, e) => ShowPage(dataRecordPage, button6, "数据记录");
             button7.Click += (sender, e) => ShowPage(userManagementPage, button7, "用户管理");
             ShowPage(homeOverviewPage, button1, "首页总览");
             StartClock();
@@ -31,6 +32,7 @@ namespace My_Industrial_Monitoring_Platform
         {
             homeOverviewPage.Visible = page == homeOverviewPage;
             userManagementPage.Visible = page == userManagementPage;
+            dataRecordPage.Visible = page == dataRecordPage;
             page.BringToFront();
             namelabel_UI.Text = pageName;
 
@@ -38,6 +40,9 @@ namespace My_Industrial_Monitoring_Platform
                 ? Color.FromArgb(32, 59, 91)
                 : Color.FromArgb(16, 26, 46);
             button7.BackColor = page == userManagementPage
+                ? Color.FromArgb(32, 59, 91)
+                : Color.FromArgb(16, 26, 46);
+            button6.BackColor = page == dataRecordPage
                 ? Color.FromArgb(32, 59, 91)
                 : Color.FromArgb(16, 26, 46);
 

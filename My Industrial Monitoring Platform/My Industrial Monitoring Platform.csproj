@@ -70,6 +70,19 @@
     <Compile Include="UserManagementPage.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="DataRecordPage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="DataRecordPage.Designer.cs">
+      <DependentUpon>DataRecordPage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="HistoryRecordControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="AlarmRecordControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="RecordControlFactory.cs" />
     <Compile Include="HomeOverviewPage.cs">
       <SubType>UserControl</SubType>
     </Compile>
