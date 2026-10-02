@@ -22,7 +22,11 @@ namespace My_Industrial_Monitoring_Platform
             InitializeComponent();
             idlable_UI.Text = username;
             button1.Click += (sender, e) => ShowPage(homeOverviewPage, button1, "首页总览");
-            button6.Click += (sender, e) => ShowPage(dataRecordPage, button6, "数据记录");
+            button6.Click += (sender, e) =>
+            {
+                ShowPage(dataRecordPage, button6, "数据记录");
+                dataRecordPage.LoadRecords();
+            };
             button7.Click += (sender, e) => ShowPage(userManagementPage, button7, "用户管理");
             ShowPage(homeOverviewPage, button1, "首页总览");
             StartClock();

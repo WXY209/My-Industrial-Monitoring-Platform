@@ -321,6 +321,7 @@ namespace My_Industrial_Monitoring_Platform
             // 
             // dataRecordPage
             // 
+            this.dataRecordPage.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(241)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.dataRecordPage.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataRecordPage.Location = new System.Drawing.Point(0, 0);
             this.dataRecordPage.Name = "dataRecordPage";
@@ -352,7 +353,7 @@ namespace My_Industrial_Monitoring_Platform
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(775, 569);
+            this.ClientSize = new System.Drawing.Size(880, 888);
             this.Controls.Add(this.rootLayout);
             this.Name = "HMI";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

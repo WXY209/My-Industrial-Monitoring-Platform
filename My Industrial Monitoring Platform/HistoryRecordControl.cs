@@ -35,14 +35,12 @@ namespace My_Industrial_Monitoring_Platform
             FindControl<Button>("historyNext").Click += (s, e) => LoadPage(currentPage + 1);
             FindControl<Button>("historyLast").Click += (s, e) => LoadPage(totalPages);
             FindControl<Button>("historyGo").Click += (s, e) => LoadPage((int)jumpPage.Value);
-            VisibleChanged += (s, e) =>
-            {
-                if (Visible)
-                {
-                    LoadDevices();
-                    LoadPage(currentPage);
-                }
-            };
+        }
+
+        public void LoadRecords()
+        {
+            LoadDevices();
+            LoadPage(currentPage);
         }
 
         private void LoadDevices()

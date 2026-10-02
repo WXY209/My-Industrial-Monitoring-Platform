@@ -31,10 +31,11 @@ namespace My_Industrial_Monitoring_Platform
             FindControl<Button>("alarmNext").Click += (s, e) => LoadPage(currentPage + 1);
             FindControl<Button>("alarmLast").Click += (s, e) => LoadPage(totalPages);
             FindControl<Button>("alarmGo").Click += (s, e) => LoadPage((int)jumpPage.Value);
-            VisibleChanged += (s, e) =>
-            {
-                if (Visible) LoadPage(currentPage);
-            };
+        }
+
+        public void LoadRecords()
+        {
+            LoadPage(currentPage);
         }
 
         private void LoadPage(int requestedPage)
