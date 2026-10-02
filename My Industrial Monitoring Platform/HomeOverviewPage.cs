@@ -332,7 +332,7 @@ namespace My_Industrial_Monitoring_Platform
             return chartLayout;
         }
 
-        private static Control CreateChartCard(
+        private Control CreateChartCard(
             string titleText,
             double minimum,
             double maximum,

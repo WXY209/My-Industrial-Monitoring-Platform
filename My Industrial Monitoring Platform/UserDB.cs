@@ -1,30 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 using System.Data;
 
 namespace My_Industrial_Monitoring_Platform
 {
     internal class UserDB
     {
-        //数据库放在当前用户的本地目录
-        private static readonly string DatabasePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MyIndustrialMonitoringPlatform", "user.db");
-
-        private static readonly string ConnectionString = "Data Source=" + DatabasePath + ";Version=3";
         /// <summary>
         /// 创建用户表
         /// </summary>
         public static void Initizlize()
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(DatabasePath));
-            using (var connection = new SQLiteConnection(ConnectionString))
+            using (var connection = DatabaseDB.OpenConnection())
             {
-                connection.Open();
                 using (var command = new SQLiteCommand(@"
                     CREATE TABLE IF NOT EXISTS Users (
                         Username TEXT PRIMARY KEY,
@@ -81,10 +70,8 @@ namespace My_Industrial_Monitoring_Platform
         /// <returns></returns>
         public static bool DataLogin(string username, string password)
         {
-            using (var connection = new SQLiteConnection(ConnectionString))
+            using (var connection = DatabaseDB.OpenConnection())
             {
-                connection.Open();
-
                 using (var command = new SQLiteCommand(@"
                     SELECT COUNT(*)
                     FROM Users
@@ -111,9 +98,8 @@ namespace My_Industrial_Monitoring_Platform
         public static DataTable GetUsers()
         {
             var table = new DataTable();
-            using (var connection = new SQLiteConnection(ConnectionString))
+            using (var connection = DatabaseDB.OpenConnection())
             {
-                connection.Open();
                 using (var command = new SQLiteCommand(@"
                     SELECT Username,Role,'正常' AS Status FROM Users
                     ORDER BY CASE WHEN Username='admin' THEN 0 ELSE 1 END,Username;", connection))
@@ -127,9 +113,8 @@ namespace My_Industrial_Monitoring_Platform
 
         public static bool CreateUser(string username, string password, string role)
         {
-            using (var connection = new SQLiteConnection(ConnectionString))
+            using (var connection = DatabaseDB.OpenConnection())
             {
-                connection.Open();
                 using (var command = new SQLiteCommand(@"
                     INSERT OR IGNORE INTO Users (Username, Password, Role)
                     VALUES (@username, @password, @role);", connection))
@@ -149,10 +134,8 @@ namespace My_Industrial_Monitoring_Platform
         /// <returns></returns>
         public static bool DeleteUser(string username)
         {
-            using (var connection = new SQLiteConnection(ConnectionString))
+            using (var connection = DatabaseDB.OpenConnection())
             {
-                connection.Open();
-
                 using (var command = new SQLiteCommand(@"
             DELETE FROM Users
             WHERE Username = @username

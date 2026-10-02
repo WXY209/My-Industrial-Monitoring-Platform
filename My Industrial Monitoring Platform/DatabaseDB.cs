@@ -10,8 +10,7 @@ namespace My_Industrial_Monitoring_Platform
     internal static class DatabaseDB
     {
         private static readonly string DatabasePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "MyIndustrialMonitoringPlatform",
+            Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..")),
             "user.db");
 
         private static readonly string ConnectionString = "Data Source=" + DatabasePath + ";Version=3";
