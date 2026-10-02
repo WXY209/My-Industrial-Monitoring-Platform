@@ -86,9 +86,7 @@
     <Compile Include="NetworkCommunicationPage.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="CommunicationConfigControl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
+    <Compile Include="CommunicationConfigControl.cs" />
     <Compile Include="CommunicationStatusControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -99,6 +97,7 @@
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="CommunicationUi.cs" />
+    <Compile Include="ModbusCommunicationService.cs" />
     <Compile Include="HomeOverviewPage.cs">
       <SubType>UserControl</SubType>
     </Compile>

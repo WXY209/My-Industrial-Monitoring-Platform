@@ -21,6 +21,8 @@ namespace My_Industrial_Monitoring_Platform
         {
             InitializeComponent();
             idlable_UI.Text = username;
+            networkCommunicationPage.ReadingProduced += homeOverviewPage.AcceptCommunicationReading;
+            networkCommunicationPage.CommunicationStopped += homeOverviewPage.CommunicationStopped;
             button1.Click += (sender, e) => ShowPage(homeOverviewPage, button1, "首页总览");
             button5.Click += (sender, e) => ShowPage(networkCommunicationPage, button5, "网络通讯");
             button6.Click += (sender, e) =>

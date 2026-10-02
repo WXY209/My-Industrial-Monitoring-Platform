@@ -35,6 +35,8 @@ namespace My_Industrial_Monitoring_Platform
             new Dictionary<string, List<SensorReading>>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> runningDevices =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> communicationDevices =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, bool> alarmStateByDevice =
             new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, AlarmRecord> activeAlarmsByDevice =
@@ -623,6 +625,13 @@ namespace My_Industrial_Monitoring_Platform
 
         private void StartMonitoring_Click(object sender, System.EventArgs e)
         {
+            if (communicationDevices.Contains(selectedDevice))
+            {
+                MessageBox.Show("该设备正在网络通讯模拟采样中，请先在“网络通讯”页面停止模拟。",
+                    "设备正在采样", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             if (!runningDevices.Add(selectedDevice))
                 return;
 
@@ -669,10 +678,11 @@ namespace My_Industrial_Monitoring_Platform
         private void UpdateMonitoringControls()
         {
             if (runSummary != null)
-                runSummary.Text = "运行: " + runningDevices.Count;
+                runSummary.Text = "运行: " + (runningDevices.Count + communicationDevices.Count);
 
             if (startButton != null)
-                startButton.Enabled = !runningDevices.Contains(selectedDevice);
+                startButton.Enabled = !runningDevices.Contains(selectedDevice)
+                    && !communicationDevices.Contains(selectedDevice);
 
             if (stopButton != null)
                 stopButton.Enabled = runningDevices.Contains(selectedDevice);
@@ -890,6 +900,37 @@ namespace My_Industrial_Monitoring_Platform
 
         private void UpdateReading(string deviceId)
         {
+            ProcessReading(simulator.NextReading(deviceId), false);
+        }
+
+        /// <summary>接收网络通讯页面产生的模拟读数，沿用首页的数据库、曲线和报警处理。</summary>
+        public void AcceptCommunicationReading(SensorReading reading)
+        {
+            if (reading == null)
+                throw new ArgumentNullException("reading");
+
+            if (runningDevices.Contains(reading.DeviceId))
+                throw new InvalidOperationException("设备 " + reading.DeviceId
+                    + " 已在首页总览中监控，请先停止首页监控再启动模拟通信。");
+
+            communicationDevices.Add(reading.DeviceId);
+            ProcessReading(reading, true);
+        }
+
+        /// <summary>模拟通信停止时，刷新首页状态文字但保留已采样数据。</summary>
+        public void CommunicationStopped(string deviceId)
+        {
+            communicationDevices.Remove(deviceId);
+            if (string.Equals(deviceId, selectedDevice, StringComparison.OrdinalIgnoreCase))
+            {
+                ShowCachedDeviceSummary(deviceId);
+                UpdateMonitoringControls();
+            }
+        }
+
+        private void ProcessReading(SensorReading reading, bool fromCommunication)
+        {
+            string deviceId = reading.DeviceId;
             List<SensorReading> deviceReadings;
             if (!readingsByDevice.TryGetValue(deviceId, out deviceReadings))
             {
@@ -897,7 +938,6 @@ namespace My_Industrial_Monitoring_Platform
                 deviceReadings = readingsByDevice[deviceId];
             }
 
-            SensorReading reading = simulator.NextReading(deviceId);
             ReadingDB.AddReading(reading);
 
             deviceReadings.Add(reading);
@@ -937,7 +977,9 @@ namespace My_Industrial_Monitoring_Platform
             {
                 if (isSelectedDevice)
                 {
-                    statusBanner.Text = "●  正在监控 " + deviceId + "，系统正常运行";
+                    statusBanner.Text = fromCommunication
+                        ? "●  正在接收 " + deviceId + " 的通信数据"
+                        : "●  正在监控 " + deviceId + "，系统正常运行";
                     statusBanner.BackColor = Color.FromArgb(226, 232, 240);
                     statusBanner.ForeColor = darkText;
                 }
@@ -967,7 +1009,8 @@ namespace My_Industrial_Monitoring_Platform
 
         private void ShowCachedDeviceSummary(string deviceId)
         {
-            bool isRunning = runningDevices.Contains(deviceId);
+            bool isCommunicationRunning = communicationDevices.Contains(deviceId);
+            bool isRunning = runningDevices.Contains(deviceId) || isCommunicationRunning;
             List<SensorReading> deviceReadings;
             if (!readingsByDevice.TryGetValue(deviceId, out deviceReadings) || deviceReadings.Count == 0)
             {
@@ -994,7 +1037,9 @@ namespace My_Industrial_Monitoring_Platform
             }
             else if (isRunning)
             {
-                statusBanner.Text = "●  正在监控 " + deviceId + "，系统正常运行";
+                statusBanner.Text = isCommunicationRunning
+                    ? "●  正在接收 " + deviceId + " 的通信数据"
+                    : "●  正在监控 " + deviceId + "，系统正常运行";
                 statusBanner.BackColor = Color.FromArgb(226, 232, 240);
                 statusBanner.ForeColor = darkText;
             }
