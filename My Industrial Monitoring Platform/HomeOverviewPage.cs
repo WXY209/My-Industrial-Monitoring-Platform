@@ -31,6 +31,12 @@ namespace My_Industrial_Monitoring_Platform
         private readonly Timer simulationTimer = new Timer { Interval = 1000 };
         private readonly Dictionary<string, List<SensorReading>> readingsByDevice =
             new Dictionary<string, List<SensorReading>>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> runningDevices =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, bool> alarmStateByDevice =
+            new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, AlarmRecord> activeAlarmsByDevice =
+            new Dictionary<string, AlarmRecord>(StringComparer.OrdinalIgnoreCase);
         private readonly List<AlarmRecord> alarmRecords = new List<AlarmRecord>();
         private readonly List<string> devices = new List<string> { "DEV-001" };
         private Button startButton;
@@ -54,8 +60,6 @@ namespace My_Industrial_Monitoring_Platform
         private Button lastAlarmPageButton;
         private Label alarmPageInfo;
         private string selectedDevice = "DEV-001";
-        private bool previousAlarm;
-        private AlarmRecord activeAlarmRecord;
         private int currentAlarmPage = 1;
 
         public HomeOverviewPage()
@@ -91,14 +95,17 @@ namespace My_Industrial_Monitoring_Platform
 
             selectedDevice = devices[0];
             foreach (string deviceId in devices)
+            {
                 AddDeviceTab(deviceId);
+                LoadSavedReadings(deviceId);
+            }
 
             deviceSummary.Text = "设备: " + selectedDevice;
             deviceCountSummary.Text = "设备数: " + devices.Count;
             LoadSavedAlarms();
-            LoadSavedReadings(selectedDevice);
             RenderDeviceHistory(selectedDevice);
             ShowCachedDeviceSummary(selectedDevice);
+            UpdateMonitoringControls();
         }
 
         private void LoadSavedReadings(string deviceId)
@@ -110,7 +117,8 @@ namespace My_Industrial_Monitoring_Platform
         private void LoadSavedAlarms()
         {
             alarmRecords.Clear();
-            activeAlarmRecord = null;
+            activeAlarmsByDevice.Clear();
+            alarmStateByDevice.Clear();
             DataTable table = AlarmDB.GetLatestAlarms(MaximumAlarmRecords);
             foreach (DataRow row in table.Rows)
             {
@@ -131,8 +139,13 @@ namespace My_Industrial_Monitoring_Platform
                         : DateTime.Parse(row["EndTime"].ToString(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
                 };
                 alarmRecords.Add(record);
-                if (activeAlarmRecord == null && record.EndTime == null && row["Status"].ToString() == "处理中")
-                    activeAlarmRecord = record;
+                string deviceId = record.Reading.DeviceId;
+                if (record.EndTime == null && row["Status"].ToString() == "处理中"
+                    && !activeAlarmsByDevice.ContainsKey(deviceId))
+                {
+                    activeAlarmsByDevice.Add(deviceId, record);
+                    alarmStateByDevice[deviceId] = true;
+                }
             }
 
             currentAlarmPage = 1;
@@ -588,24 +601,26 @@ namespace My_Industrial_Monitoring_Platform
 
         private void StartMonitoring_Click(object sender, System.EventArgs e)
         {
-            if (simulationTimer.Enabled)
+            if (!runningDevices.Add(selectedDevice))
                 return;
 
-            runSummary.Text = "运行: 1";
             simulationTimer.Start();
-            TryUpdateReading();
+            UpdateMonitoringControls();
+            TryUpdateReading(selectedDevice);
         }
 
         private void StopMonitoring_Click(object sender, System.EventArgs e)
         {
-            simulationTimer.Stop();
-            runSummary.Text = "运行: 0";
+            if (!runningDevices.Remove(selectedDevice))
+                return;
 
-            CloseActiveAlarm(DateTime.Now);
-            previousAlarm = false;
-            statusBanner.Text = "●  系统正常运行（模拟监控已停止）";
-            statusBanner.BackColor = Color.FromArgb(226, 232, 240);
-            statusBanner.ForeColor = darkText;
+            CloseActiveAlarm(selectedDevice, DateTime.Now);
+            alarmStateByDevice[selectedDevice] = false;
+            if (runningDevices.Count == 0)
+                simulationTimer.Stop();
+
+            UpdateMonitoringControls();
+            ShowCachedDeviceSummary(selectedDevice);
         }
 
         private void SelectDevice(string deviceId)
@@ -613,7 +628,6 @@ namespace My_Industrial_Monitoring_Platform
             if (string.Equals(deviceId, selectedDevice, StringComparison.OrdinalIgnoreCase))
                 return;
 
-            CloseActiveAlarm(DateTime.Now);
             selectedDevice = deviceId;
             deviceSummary.Text = "设备: " + selectedDevice;
 
@@ -626,12 +640,20 @@ namespace My_Industrial_Monitoring_Platform
 
             LoadSavedReadings(selectedDevice);
             RenderDeviceHistory(selectedDevice);
-            previousAlarm = false;
+            ShowCachedDeviceSummary(selectedDevice);
+            UpdateMonitoringControls();
+        }
 
-            if (simulationTimer.Enabled)
-                TryUpdateReading();
-            else
-                ShowCachedDeviceSummary(selectedDevice);
+        private void UpdateMonitoringControls()
+        {
+            if (runSummary != null)
+                runSummary.Text = "运行: " + runningDevices.Count;
+
+            if (startButton != null)
+                startButton.Enabled = !runningDevices.Contains(selectedDevice);
+
+            if (stopButton != null)
+                stopButton.Enabled = runningDevices.Contains(selectedDevice);
         }
 
         private static void SetDeviceButtonStyle(Button button, bool selected)
@@ -687,8 +709,11 @@ namespace My_Industrial_Monitoring_Platform
                 return;
             }
 
-            CloseActiveAlarm(DateTime.Now);
-            previousAlarm = false;
+            runningDevices.Remove(removedDevice);
+            if (runningDevices.Count == 0)
+                simulationTimer.Stop();
+            CloseActiveAlarm(removedDevice, DateTime.Now);
+            alarmStateByDevice.Remove(removedDevice);
             devices.Remove(removedDevice);
             readingsByDevice.Remove(removedDevice);
             simulator.RemoveDevice(removedDevice);
@@ -707,6 +732,7 @@ namespace My_Industrial_Monitoring_Platform
             deviceCountSummary.Text = "设备数: " + devices.Count;
             selectedDevice = string.Empty;
             SelectDevice(devices[0]);
+            UpdateMonitoringControls();
         }
 
         private void RestoreDevice_Click(object sender, EventArgs e)
@@ -808,71 +834,97 @@ namespace My_Industrial_Monitoring_Platform
 
         private void SimulationTimer_Tick(object sender, System.EventArgs e)
         {
-            TryUpdateReading();
+            if (runningDevices.Count == 0)
+            {
+                simulationTimer.Stop();
+                UpdateMonitoringControls();
+                return;
+            }
+
+            foreach (string deviceId in new List<string>(runningDevices))
+                TryUpdateReading(deviceId);
         }
 
-        private void TryUpdateReading()
+        private void TryUpdateReading(string deviceId)
         {
             try
             {
-                UpdateReading();
+                UpdateReading(deviceId);
             }
             catch (Exception ex)
             {
-                simulationTimer.Stop();
-                runSummary.Text = "运行: 0";
-                MessageBox.Show("保存监控数据失败，监控已停止。\r\n" + ex.Message,
+                runningDevices.Remove(deviceId);
+                if (runningDevices.Count == 0)
+                    simulationTimer.Stop();
+                UpdateMonitoringControls();
+
+                if (string.Equals(deviceId, selectedDevice, StringComparison.OrdinalIgnoreCase))
+                    ShowCachedDeviceSummary(deviceId);
+
+                MessageBox.Show("设备 " + deviceId + " 保存监控数据失败，该设备监控已停止。\r\n" + ex.Message,
                     "数据库错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void UpdateReading()
+        private void UpdateReading(string deviceId)
         {
-            SensorReading reading = simulator.NextReading(selectedDevice);
-            ReadingDB.AddReading(reading);
-
             List<SensorReading> deviceReadings;
-            if (!readingsByDevice.TryGetValue(selectedDevice, out deviceReadings))
+            if (!readingsByDevice.TryGetValue(deviceId, out deviceReadings))
             {
-                deviceReadings = new List<SensorReading>();
-                readingsByDevice.Add(selectedDevice, deviceReadings);
+                LoadSavedReadings(deviceId);
+                deviceReadings = readingsByDevice[deviceId];
             }
+
+            SensorReading reading = simulator.NextReading(deviceId);
+            ReadingDB.AddReading(reading);
 
             deviceReadings.Add(reading);
             if (deviceReadings.Count > 11)
                 deviceReadings.RemoveAt(0);
 
-            temperatureSummary.Text = "温度: " + reading.Temperature.ToString("F2") + " °C";
-            pressureSummary.Text = "压力: " + reading.Pressure.ToString("F2") + " MPa";
-            RenderDeviceHistory(selectedDevice);
+            bool isSelectedDevice = string.Equals(deviceId, selectedDevice, StringComparison.OrdinalIgnoreCase);
+            if (isSelectedDevice)
+            {
+                temperatureSummary.Text = "温度: " + reading.Temperature.ToString("F2") + " °C";
+                pressureSummary.Text = "压力: " + reading.Pressure.ToString("F2") + " MPa";
+                RenderDeviceHistory(deviceId);
+            }
 
             bool temperatureAlarm = reading.Temperature >= 60.0;
             bool pressureAlarm = reading.Pressure >= 1.8;
             bool alarm = temperatureAlarm || pressureAlarm;
+            bool wasAlarm;
+            alarmStateByDevice.TryGetValue(deviceId, out wasAlarm);
 
             if (alarm)
             {
                 string reason = temperatureAlarm && pressureAlarm
                     ? "温度+压力超限"
                     : (temperatureAlarm ? "温度超限" : "压力超限");
-                statusBanner.Text = "⚠  " + selectedDevice + " " + reason;
-                statusBanner.BackColor = Color.FromArgb(254, 226, 226);
-                statusBanner.ForeColor = Color.FromArgb(220, 38, 38);
+                if (isSelectedDevice)
+                {
+                    statusBanner.Text = "⚠  " + deviceId + " " + reason;
+                    statusBanner.BackColor = Color.FromArgb(254, 226, 226);
+                    statusBanner.ForeColor = Color.FromArgb(220, 38, 38);
+                }
 
-                if (!previousAlarm)
+                if (!wasAlarm)
                     AddAlarmRow(reading, reason);
             }
             else
             {
-                statusBanner.Text = "●  正在模拟监控 " + selectedDevice + "，系统正常运行";
-                statusBanner.BackColor = Color.FromArgb(226, 232, 240);
-                statusBanner.ForeColor = darkText;
+                if (isSelectedDevice)
+                {
+                    statusBanner.Text = "●  正在监控 " + deviceId + "，系统正常运行";
+                    statusBanner.BackColor = Color.FromArgb(226, 232, 240);
+                    statusBanner.ForeColor = darkText;
+                }
 
-                if (previousAlarm && activeAlarmRecord != null)
-                    CloseActiveAlarm(reading.Timestamp);
+                if (wasAlarm)
+                    CloseActiveAlarm(deviceId, reading.Timestamp);
             }
 
-            previousAlarm = alarm;
+            alarmStateByDevice[deviceId] = alarm;
         }
 
         private void RenderDeviceHistory(string deviceId)
@@ -893,12 +945,15 @@ namespace My_Industrial_Monitoring_Platform
 
         private void ShowCachedDeviceSummary(string deviceId)
         {
+            bool isRunning = runningDevices.Contains(deviceId);
             List<SensorReading> deviceReadings;
             if (!readingsByDevice.TryGetValue(deviceId, out deviceReadings) || deviceReadings.Count == 0)
             {
                 temperatureSummary.Text = "温度: -- °C";
                 pressureSummary.Text = "压力: -- MPa";
-                statusBanner.Text = "●  " + deviceId + " 尚无模拟数据（监控已停止）";
+                statusBanner.Text = isRunning
+                    ? "●  正在监控 " + deviceId + "，等待首条数据"
+                    : "●  " + deviceId + " 尚无数据（监控已停止）";
                 statusBanner.BackColor = Color.FromArgb(226, 232, 240);
                 statusBanner.ForeColor = darkText;
                 return;
@@ -909,26 +964,43 @@ namespace My_Industrial_Monitoring_Platform
             pressureSummary.Text = "压力: " + latest.Pressure.ToString("F2") + " MPa";
 
             bool alarm = latest.Temperature >= 60.0 || latest.Pressure >= 1.8;
-            statusBanner.Text = alarm
-                ? "⚠  " + deviceId + " 上次读数超限（监控已停止）"
-                : "●  " + deviceId + " 已显示保留数据（监控已停止）";
-            statusBanner.BackColor = alarm
-                ? Color.FromArgb(254, 226, 226)
-                : Color.FromArgb(226, 232, 240);
-            statusBanner.ForeColor = alarm
-                ? Color.FromArgb(220, 38, 38)
-                : darkText;
+            if (activeAlarmsByDevice.ContainsKey(deviceId))
+            {
+                statusBanner.Text = "⚠  " + deviceId + " 存在处理中报警";
+                statusBanner.BackColor = Color.FromArgb(254, 226, 226);
+                statusBanner.ForeColor = Color.FromArgb(220, 38, 38);
+            }
+            else if (isRunning)
+            {
+                statusBanner.Text = "●  正在监控 " + deviceId + "，系统正常运行";
+                statusBanner.BackColor = Color.FromArgb(226, 232, 240);
+                statusBanner.ForeColor = darkText;
+            }
+            else
+            {
+                statusBanner.Text = alarm
+                    ? "⚠  " + deviceId + " 上次读数超限（监控已停止）"
+                    : "●  " + deviceId + " 已显示保留数据（监控已停止）";
+                statusBanner.BackColor = alarm
+                    ? Color.FromArgb(254, 226, 226)
+                    : Color.FromArgb(226, 232, 240);
+                statusBanner.ForeColor = alarm
+                    ? Color.FromArgb(220, 38, 38)
+                    : darkText;
+            }
         }
 
-        private void CloseActiveAlarm(DateTime endTime)
+        private void CloseActiveAlarm(string deviceId, DateTime endTime)
         {
-            if (activeAlarmRecord != null)
+            AlarmRecord activeAlarm;
+            if (activeAlarmsByDevice.TryGetValue(deviceId, out activeAlarm))
             {
-                activeAlarmRecord.EndTime = endTime;
-                AlarmDB.CloseAlarm(activeAlarmRecord.Id, endTime);
+                activeAlarm.EndTime = endTime;
+                AlarmDB.CloseAlarm(activeAlarm.Id, endTime);
+                activeAlarmsByDevice.Remove(deviceId);
             }
 
-            activeAlarmRecord = null;
+            alarmStateByDevice[deviceId] = false;
             RenderAlarmPage();
         }
 
@@ -947,7 +1019,8 @@ namespace My_Industrial_Monitoring_Platform
                 StartTime = reading.Timestamp
             };
             alarmRecords.Insert(0, alarm);
-            activeAlarmRecord = alarm;
+            activeAlarmsByDevice[reading.DeviceId] = alarm;
+            alarmStateByDevice[reading.DeviceId] = true;
 
             if (alarmRecords.Count > MaximumAlarmRecords)
                 alarmRecords.RemoveAt(alarmRecords.Count - 1);
@@ -979,13 +1052,13 @@ namespace My_Industrial_Monitoring_Platform
             int endIndex = Math.Min(startIndex + AlarmPageSize, alarmRecords.Count);
 
             historyGrid.Rows.Clear();
-            activeAlarmRecord = activeAlarmRecord != null && alarmRecords.Contains(activeAlarmRecord)
-                ? activeAlarmRecord
-                : null;
 
             for (int i = startIndex; i < endIndex; i++)
             {
                 AlarmRecord alarm = alarmRecords[i];
+                AlarmRecord activeAlarm;
+                bool isActive = activeAlarmsByDevice.TryGetValue(alarm.Reading.DeviceId, out activeAlarm)
+                    && ReferenceEquals(activeAlarm, alarm);
                 string endTime = alarm.EndTime.HasValue
                     ? alarm.EndTime.Value.ToString("MM-dd HH:mm:ss")
                     : "处理中";
@@ -999,7 +1072,7 @@ namespace My_Industrial_Monitoring_Platform
                     alarm.StartTime.ToString("MM-dd HH:mm:ss"),
                     endTime);
 
-                if (ReferenceEquals(alarm, activeAlarmRecord))
+                if (isActive)
                     historyGrid.Rows[rowIndex].DefaultCellStyle.ForeColor = Color.FromArgb(220, 38, 38);
             }
 
