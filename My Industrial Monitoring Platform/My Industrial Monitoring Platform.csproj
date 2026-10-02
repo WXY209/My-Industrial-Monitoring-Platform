@@ -83,6 +83,22 @@
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="RecordControlFactory.cs" />
+    <Compile Include="NetworkCommunicationPage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="CommunicationConfigControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="CommunicationStatusControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="RegisterMappingControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="CommunicationLogControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="CommunicationUi.cs" />
     <Compile Include="HomeOverviewPage.cs">
       <SubType>UserControl</SubType>
     </Compile>

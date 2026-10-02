@@ -35,6 +35,7 @@ namespace My_Industrial_Monitoring_Platform
             this.button5 = new System.Windows.Forms.Button();
             this.rootLayout = new System.Windows.Forms.TableLayoutPanel();
             this.contentHost = new System.Windows.Forms.Panel();
+            this.networkCommunicationPage = new My_Industrial_Monitoring_Platform.NetworkCommunicationPage();
             this.dataRecordPage = new My_Industrial_Monitoring_Platform.DataRecordPage();
             this.userManagementPage = new My_Industrial_Monitoring_Platform.UserManagementPage();
             this.homeOverviewPage = new My_Industrial_Monitoring_Platform.HomeOverviewPage();
@@ -57,7 +58,7 @@ namespace My_Industrial_Monitoring_Platform
             this.toppanel.Dock = System.Windows.Forms.DockStyle.Top;
             this.toppanel.Location = new System.Drawing.Point(3, 3);
             this.toppanel.Name = "toppanel";
-            this.toppanel.Size = new System.Drawing.Size(769, 34);
+            this.toppanel.Size = new System.Drawing.Size(921, 34);
             this.toppanel.TabIndex = 0;
             // 
             // tableLayoutPanel1
@@ -72,7 +73,7 @@ namespace My_Industrial_Monitoring_Platform
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 1;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(769, 34);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(921, 34);
             this.tableLayoutPanel1.TabIndex = 1;
             // 
             // breadcrumbPanel
@@ -85,7 +86,7 @@ namespace My_Industrial_Monitoring_Platform
             this.breadcrumbPanel.Margin = new System.Windows.Forms.Padding(0);
             this.breadcrumbPanel.Name = "breadcrumbPanel";
             this.breadcrumbPanel.Padding = new System.Windows.Forms.Padding(8, 12, 4, 0);
-            this.breadcrumbPanel.Size = new System.Drawing.Size(307, 34);
+            this.breadcrumbPanel.Size = new System.Drawing.Size(368, 34);
             this.breadcrumbPanel.TabIndex = 0;
             this.breadcrumbPanel.WrapContents = false;
             // 
@@ -120,11 +121,11 @@ namespace My_Industrial_Monitoring_Platform
             this.statusPanel.Controls.Add(this.checklabel_UI);
             this.statusPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.statusPanel.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
-            this.statusPanel.Location = new System.Drawing.Point(307, 0);
+            this.statusPanel.Location = new System.Drawing.Point(368, 0);
             this.statusPanel.Margin = new System.Windows.Forms.Padding(0);
             this.statusPanel.Name = "statusPanel";
             this.statusPanel.Padding = new System.Windows.Forms.Padding(4, 12, 8, 0);
-            this.statusPanel.Size = new System.Drawing.Size(462, 34);
+            this.statusPanel.Size = new System.Drawing.Size(553, 34);
             this.statusPanel.TabIndex = 1;
             this.statusPanel.WrapContents = false;
             // 
@@ -132,7 +133,7 @@ namespace My_Industrial_Monitoring_Platform
             // 
             this.timelabel_UI.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.timelabel_UI.AutoSize = true;
-            this.timelabel_UI.Location = new System.Drawing.Point(417, 13);
+            this.timelabel_UI.Location = new System.Drawing.Point(508, 13);
             this.timelabel_UI.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.timelabel_UI.Name = "timelabel_UI";
             this.timelabel_UI.Size = new System.Drawing.Size(29, 12);
@@ -144,7 +145,7 @@ namespace My_Industrial_Monitoring_Platform
             this.idtypelabel_UI.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.idtypelabel_UI.AutoSize = true;
             this.idtypelabel_UI.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.idtypelabel_UI.Location = new System.Drawing.Point(366, 12);
+            this.idtypelabel_UI.Location = new System.Drawing.Point(457, 12);
             this.idtypelabel_UI.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.idtypelabel_UI.Name = "idtypelabel_UI";
             this.idtypelabel_UI.Size = new System.Drawing.Size(43, 14);
@@ -156,7 +157,7 @@ namespace My_Industrial_Monitoring_Platform
             this.idlable_UI.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.idlable_UI.AutoSize = true;
             this.idlable_UI.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.idlable_UI.Location = new System.Drawing.Point(321, 12);
+            this.idlable_UI.Location = new System.Drawing.Point(412, 12);
             this.idlable_UI.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.idlable_UI.Name = "idlable_UI";
             this.idlable_UI.Size = new System.Drawing.Size(37, 14);
@@ -167,7 +168,7 @@ namespace My_Industrial_Monitoring_Platform
             // 
             this.checklabel_UI.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.checklabel_UI.AutoSize = true;
-            this.checklabel_UI.Location = new System.Drawing.Point(242, 13);
+            this.checklabel_UI.Location = new System.Drawing.Point(333, 13);
             this.checklabel_UI.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.checklabel_UI.Name = "checklabel_UI";
             this.checklabel_UI.Size = new System.Drawing.Size(71, 12);
@@ -181,7 +182,7 @@ namespace My_Industrial_Monitoring_Platform
             this.panel1.Dock = System.Windows.Forms.DockStyle.Left;
             this.panel1.Location = new System.Drawing.Point(3, 43);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(131, 523);
+            this.panel1.Size = new System.Drawing.Size(131, 628);
             this.panel1.TabIndex = 1;
             // 
             // tableLayoutPanel2
@@ -204,7 +205,7 @@ namespace My_Industrial_Monitoring_Platform
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-            this.tableLayoutPanel2.Size = new System.Drawing.Size(131, 523);
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(131, 628);
             this.tableLayoutPanel2.TabIndex = 0;
             // 
             // button7
@@ -217,10 +218,10 @@ namespace My_Industrial_Monitoring_Platform
             this.button7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button7.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.button7.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.button7.Location = new System.Drawing.Point(0, 156);
+            this.button7.Location = new System.Drawing.Point(0, 186);
             this.button7.Margin = new System.Windows.Forms.Padding(0);
             this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(131, 52);
+            this.button7.Size = new System.Drawing.Size(131, 62);
             this.button7.TabIndex = 6;
             this.button7.Text = "用户管理";
             this.button7.UseVisualStyleBackColor = false;
@@ -235,10 +236,10 @@ namespace My_Industrial_Monitoring_Platform
             this.button6.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button6.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.button6.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.button6.Location = new System.Drawing.Point(0, 104);
+            this.button6.Location = new System.Drawing.Point(0, 124);
             this.button6.Margin = new System.Windows.Forms.Padding(0);
             this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(131, 52);
+            this.button6.Size = new System.Drawing.Size(131, 62);
             this.button6.TabIndex = 5;
             this.button6.Text = "数据记录";
             this.button6.UseVisualStyleBackColor = false;
@@ -257,7 +258,7 @@ namespace My_Industrial_Monitoring_Platform
             this.button1.Location = new System.Drawing.Point(0, 0);
             this.button1.Margin = new System.Windows.Forms.Padding(0);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(131, 52);
+            this.button1.Size = new System.Drawing.Size(131, 62);
             this.button1.TabIndex = 0;
             this.button1.Text = "首页总览";
             this.button1.UseVisualStyleBackColor = false;
@@ -270,7 +271,7 @@ namespace My_Industrial_Monitoring_Platform
             this.selectedNavIndicator.Location = new System.Drawing.Point(0, 0);
             this.selectedNavIndicator.Margin = new System.Windows.Forms.Padding(0);
             this.selectedNavIndicator.Name = "selectedNavIndicator";
-            this.selectedNavIndicator.Size = new System.Drawing.Size(3, 52);
+            this.selectedNavIndicator.Size = new System.Drawing.Size(3, 62);
             this.selectedNavIndicator.TabIndex = 7;
             // 
             // button5
@@ -283,10 +284,10 @@ namespace My_Industrial_Monitoring_Platform
             this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button5.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.button5.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.button5.Location = new System.Drawing.Point(0, 52);
+            this.button5.Location = new System.Drawing.Point(0, 62);
             this.button5.Margin = new System.Windows.Forms.Padding(0);
             this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(131, 52);
+            this.button5.Size = new System.Drawing.Size(131, 62);
             this.button5.TabIndex = 4;
             this.button5.Text = "网络通讯";
             this.button5.UseVisualStyleBackColor = false;
@@ -305,19 +306,31 @@ namespace My_Industrial_Monitoring_Platform
             this.rootLayout.RowCount = 2;
             this.rootLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
             this.rootLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.rootLayout.Size = new System.Drawing.Size(775, 569);
+            this.rootLayout.Size = new System.Drawing.Size(927, 674);
             this.rootLayout.TabIndex = 2;
             // 
             // contentHost
             // 
+            this.contentHost.Controls.Add(this.networkCommunicationPage);
             this.contentHost.Controls.Add(this.dataRecordPage);
             this.contentHost.Controls.Add(this.userManagementPage);
             this.contentHost.Controls.Add(this.homeOverviewPage);
             this.contentHost.Dock = System.Windows.Forms.DockStyle.Fill;
             this.contentHost.Location = new System.Drawing.Point(140, 43);
             this.contentHost.Name = "contentHost";
-            this.contentHost.Size = new System.Drawing.Size(632, 523);
+            this.contentHost.Size = new System.Drawing.Size(784, 628);
             this.contentHost.TabIndex = 0;
+            // 
+            // networkCommunicationPage
+            // 
+            this.networkCommunicationPage.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(241)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
+            this.networkCommunicationPage.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.networkCommunicationPage.Location = new System.Drawing.Point(0, 0);
+            this.networkCommunicationPage.Name = "networkCommunicationPage";
+            this.networkCommunicationPage.Padding = new System.Windows.Forms.Padding(10);
+            this.networkCommunicationPage.Size = new System.Drawing.Size(784, 628);
+            this.networkCommunicationPage.TabIndex = 3;
+            this.networkCommunicationPage.Visible = false;
             // 
             // dataRecordPage
             // 
@@ -325,7 +338,7 @@ namespace My_Industrial_Monitoring_Platform
             this.dataRecordPage.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataRecordPage.Location = new System.Drawing.Point(0, 0);
             this.dataRecordPage.Name = "dataRecordPage";
-            this.dataRecordPage.Size = new System.Drawing.Size(632, 523);
+            this.dataRecordPage.Size = new System.Drawing.Size(784, 628);
             this.dataRecordPage.TabIndex = 2;
             // 
             // userManagementPage
@@ -335,7 +348,7 @@ namespace My_Industrial_Monitoring_Platform
             this.userManagementPage.Location = new System.Drawing.Point(0, 0);
             this.userManagementPage.Name = "userManagementPage";
             this.userManagementPage.Padding = new System.Windows.Forms.Padding(12);
-            this.userManagementPage.Size = new System.Drawing.Size(632, 523);
+            this.userManagementPage.Size = new System.Drawing.Size(784, 628);
             this.userManagementPage.TabIndex = 0;
             this.userManagementPage.Visible = false;
             // 
@@ -346,14 +359,14 @@ namespace My_Industrial_Monitoring_Platform
             this.homeOverviewPage.Location = new System.Drawing.Point(0, 0);
             this.homeOverviewPage.Name = "homeOverviewPage";
             this.homeOverviewPage.Padding = new System.Windows.Forms.Padding(10);
-            this.homeOverviewPage.Size = new System.Drawing.Size(632, 523);
+            this.homeOverviewPage.Size = new System.Drawing.Size(784, 628);
             this.homeOverviewPage.TabIndex = 1;
             // 
             // HMI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(880, 888);
+            this.ClientSize = new System.Drawing.Size(927, 674);
             this.Controls.Add(this.rootLayout);
             this.Name = "HMI";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -396,6 +409,7 @@ namespace My_Industrial_Monitoring_Platform
         private System.Windows.Forms.TableLayoutPanel rootLayout;
         private UserManagementPage userManagementPage;
         private System.Windows.Forms.Panel contentHost;
+        private NetworkCommunicationPage networkCommunicationPage;
         private DataRecordPage dataRecordPage;
         private HomeOverviewPage homeOverviewPage;
     }
