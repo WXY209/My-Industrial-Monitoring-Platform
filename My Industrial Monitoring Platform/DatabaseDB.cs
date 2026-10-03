@@ -69,6 +69,19 @@ namespace My_Industrial_Monitoring_Platform
                     Status TEXT NOT NULL
                 );
                 CREATE INDEX IF NOT EXISTS IX_Alarms_StartTime ON Alarms(StartTime);
+                CREATE TABLE IF NOT EXISTS CommunicationLogs (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Timestamp TEXT NOT NULL,
+                    DeviceId TEXT NULL,
+                    Direction TEXT NOT NULL,
+                    Operation TEXT NOT NULL,
+                    Result TEXT NOT NULL,
+                    Details TEXT NULL
+                );
+                CREATE INDEX IF NOT EXISTS IX_CommunicationLogs_Timestamp
+                    ON CommunicationLogs(Timestamp DESC);
+                CREATE INDEX IF NOT EXISTS IX_CommunicationLogs_Device_Time
+                    ON CommunicationLogs(DeviceId, Timestamp DESC);
             ", connection))
             {
                 command.ExecuteNonQuery();

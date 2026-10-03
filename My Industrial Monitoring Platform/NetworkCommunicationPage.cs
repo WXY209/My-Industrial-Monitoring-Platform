@@ -15,10 +15,23 @@ namespace My_Industrial_Monitoring_Platform
         private readonly MonitoringSimulator simulator = new MonitoringSimulator();
         private readonly ModbusCommunicationService modbusService = new ModbusCommunicationService();
         private readonly Timer samplingTimer = new Timer();
+        private readonly Timer reconnectTimer = new Timer();
         private CommunicationSettings activeSettings;
         private string activeDeviceId;
         private bool pollInProgress;
+        private bool isReconnecting;
+        private bool reconnectAttemptInProgress;
+        private bool reconnectPromptShown;
+        private int reconnectAttempts;
+        private DateTime reconnectDeadline;
+        private DateTime nextReconnectAttempt;
         private int connectionVersion;
+
+        private sealed class OperationResult<T>
+        {
+            public T Value;
+            public Exception Error;
+        }
 
         /// <summary>成功采样后发出，供首页保存采样并更新曲线和报警。</summary>
         public event Action<SensorReading> ReadingProduced;
@@ -57,18 +70,23 @@ namespace My_Industrial_Monitoring_Platform
             statusControl.DisconnectRequested += DisconnectCommunication;
             statusControl.TestReadRequested += TestRead;
             samplingTimer.Tick += SamplingTimer_Tick;
+            reconnectTimer.Interval = 1000;
+            reconnectTimer.Tick += ReconnectTimer_Tick;
             Disposed += (sender, e) =>
             {
                 samplingTimer.Stop();
+                reconnectTimer.Stop();
                 modbusService.Dispose();
             };
         }
 
         private async void ConnectCommunication(object sender, EventArgs e)
         {
+            int version = -1;
             try
             {
                 await StopCurrentCommunication(false);
+                version = connectionVersion;
                 configControl.RefreshDevices();
                 activeSettings = configControl.GetSettings(mappingControl);
                 activeDeviceId = activeSettings.DeviceId;
@@ -78,36 +96,55 @@ namespace My_Industrial_Monitoring_Platform
                 {
                     statusControl.SetRunning("模拟", activeDeviceId);
                     logControl.AddEntry("系统", "启动模拟数据", "成功", "设备 " + activeDeviceId
-                        + "，采样间隔 " + samplingTimer.Interval + " ms");
+                        + "，采样间隔 " + samplingTimer.Interval + " ms", activeDeviceId);
                     SensorReading firstReading = simulator.NextReading(activeDeviceId);
                     PublishReading(firstReading, "模拟数据");
                     samplingTimer.Start();
                     return;
                 }
 
-                int version = connectionVersion;
                 string modeName = activeSettings.Mode == CommunicationMode.ModbusRtu ? "Modbus RTU" : "Modbus TCP";
                 statusControl.SetConnecting(modeName);
-                logControl.AddEntry("系统", "连接 " + modeName, "进行中", DescribeConnection(activeSettings));
+                logControl.AddEntry("系统", "连接 " + modeName, "进行中", DescribeConnection(activeSettings), activeDeviceId);
 
                 CommunicationSettings settingsToConnect = activeSettings;
-                await Task.Run(() => modbusService.Connect(settingsToConnect));
+                OperationResult<bool> connectResult = await Task.Run(() => ExecuteSafely(delegate
+                {
+                    modbusService.Connect(settingsToConnect);
+                    return true;
+                }));
                 if (version != connectionVersion || IsDisposed)
                 {
-                    await Task.Run(() => modbusService.Disconnect());
+                    await DisconnectServiceAsync();
+                    return;
+                }
+
+                if (connectResult.Error != null)
+                {
+                    statusControl.RecordFailure();
+                    logControl.AddEntry("系统", "连接 " + modeName, "失败", connectResult.Error.Message, activeDeviceId);
+                    await StopCurrentCommunication(false);
+                    MessageBox.Show(this.FindForm(), "连接 " + modeName + " 失败：\r\n" + connectResult.Error.Message,
+                        "通信连接失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
                 statusControl.SetRunning(modeName, activeDeviceId);
-                logControl.AddEntry("系统", "连接 " + modeName, "成功", DescribeConnection(activeSettings));
+                logControl.AddEntry("系统", "连接 " + modeName, "成功", DescribeConnection(activeSettings), activeDeviceId);
                 samplingTimer.Start();
                 await PollModbusOnce(version);
             }
             catch (Exception ex)
             {
+                if (version >= 0 && version != connectionVersion)
+                    return;
+
                 statusControl.RecordFailure();
-                logControl.AddEntry("系统", "连接/采样", "失败", ex.Message);
+                logControl.AddEntry("系统", "连接/采样", "失败", ex.Message, activeDeviceId);
                 await StopCurrentCommunication(false);
+                if (!IsDisposed)
+                    MessageBox.Show(this.FindForm(), "连接或启动采样失败：\r\n" + ex.Message,
+                        "通信失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -120,12 +157,15 @@ namespace My_Industrial_Monitoring_Platform
             catch (Exception ex)
             {
                 statusControl.RecordFailure();
-                logControl.AddEntry("系统", "断开连接", "失败", ex.Message);
+                logControl.AddEntry("系统", "断开连接", "失败", ex.Message, activeDeviceId);
             }
         }
 
         private async void TestRead(object sender, EventArgs e)
         {
+            if (isReconnecting)
+                return;
+
             if (activeSettings != null)
             {
                 if (activeSettings.Mode == CommunicationMode.Simulation)
@@ -138,7 +178,7 @@ namespace My_Industrial_Monitoring_Platform
                     catch (Exception ex)
                     {
                         statusControl.RecordFailure();
-                        logControl.AddEntry("模拟器", "单次读取", "失败", ex.Message);
+                        logControl.AddEntry("模拟器", "单次读取", "失败", ex.Message, activeDeviceId);
                     }
                     return;
                 }
@@ -147,10 +187,12 @@ namespace My_Industrial_Monitoring_Platform
                 return;
             }
 
+            string oneOffDeviceId = null;
             try
             {
                 configControl.RefreshDevices();
                 CommunicationSettings settings = configControl.GetSettings(mappingControl);
+                oneOffDeviceId = settings.DeviceId;
                 if (settings.Mode != CommunicationMode.Simulation)
                     throw new InvalidOperationException("请先点击“连接”建立 RTU/TCP 连接，再进行单次读取。");
 
@@ -167,13 +209,13 @@ namespace My_Industrial_Monitoring_Platform
             catch (Exception ex)
             {
                 statusControl.RecordFailure();
-                logControl.AddEntry("系统", "单次读取", "失败", ex.Message);
+                logControl.AddEntry("系统", "单次读取", "失败", ex.Message, oneOffDeviceId);
             }
         }
 
         private async void SamplingTimer_Tick(object sender, EventArgs e)
         {
-            if (activeSettings == null || pollInProgress)
+            if (activeSettings == null || pollInProgress || isReconnecting)
                 return;
 
             if (activeSettings.Mode == CommunicationMode.Simulation)
@@ -186,7 +228,7 @@ namespace My_Industrial_Monitoring_Platform
                 catch (Exception ex)
                 {
                     statusControl.RecordFailure();
-                    logControl.AddEntry("模拟器", "周期采样", "失败", ex.Message);
+                    logControl.AddEntry("模拟器", "周期采样", "失败", ex.Message, activeDeviceId);
                     await StopCurrentCommunication(false);
                 }
                 return;
@@ -197,15 +239,26 @@ namespace My_Industrial_Monitoring_Platform
 
         private async Task PollModbusOnce(int version)
         {
-            if (pollInProgress || activeSettings == null || activeSettings.Mode == CommunicationMode.Simulation)
+            if (pollInProgress || isReconnecting || activeSettings == null
+                || activeSettings.Mode == CommunicationMode.Simulation)
                 return;
 
             pollInProgress = true;
             try
             {
-                SensorReading reading = await Task.Run(() => modbusService.ReadReading());
+                OperationResult<SensorReading> readResult = await Task.Run(() => ExecuteSafely(
+                    delegate { return modbusService.ReadReading(); }));
                 if (version != connectionVersion || activeSettings == null || IsDisposed)
                     return;
+
+                if (readResult.Error != null)
+                {
+                    statusControl.RecordFailure();
+                    await BeginReconnect(readResult.Error);
+                    return;
+                }
+
+                SensorReading reading = readResult.Value;
                 PublishReading(reading, activeSettings.Mode == CommunicationMode.ModbusRtu ? "Modbus RTU" : "Modbus TCP");
             }
             catch (Exception ex)
@@ -213,14 +266,197 @@ namespace My_Industrial_Monitoring_Platform
                 if (version == connectionVersion && !IsDisposed)
                 {
                     statusControl.RecordFailure();
-                    logControl.AddEntry("接收", "读取温度/压力寄存器", "失败", ex.Message);
-                    await StopCurrentCommunication(false);
+                    await BeginReconnect(ex);
                 }
             }
             finally
             {
                 pollInProgress = false;
             }
+        }
+
+        private async Task BeginReconnect(Exception error)
+        {
+            if (activeSettings == null || activeSettings.Mode == CommunicationMode.Simulation || isReconnecting)
+                return;
+
+            samplingTimer.Stop();
+            isReconnecting = true;
+            reconnectPromptShown = false;
+            reconnectAttempts = 0;
+            reconnectDeadline = DateTime.Now.AddSeconds(30);
+            nextReconnectAttempt = DateTime.Now.AddSeconds(5);
+            int version = ++connectionVersion;
+
+            statusControl.SetReconnecting(activeDeviceId, 0, 30);
+            logControl.AddEntry("系统", "通信中断", "失败", "设备 " + activeDeviceId + " | " + error.Message, activeDeviceId);
+
+            await DisconnectServiceAsync();
+            if (version == connectionVersion && isReconnecting && activeSettings != null && !IsDisposed)
+                reconnectTimer.Start();
+        }
+
+        private async void ReconnectTimer_Tick(object sender, EventArgs e)
+        {
+            if (!isReconnecting || activeSettings == null || IsDisposed)
+                return;
+
+            DateTime now = DateTime.Now;
+            if (now >= reconnectDeadline)
+            {
+                await FinishReconnectTimeout();
+                return;
+            }
+
+            if (reconnectAttemptInProgress || now < nextReconnectAttempt)
+                return;
+
+            int remainingMilliseconds = (int)(reconnectDeadline - now).TotalMilliseconds;
+            if (remainingMilliseconds < 300)
+            {
+                await FinishReconnectTimeout();
+                return;
+            }
+
+            reconnectAttemptInProgress = true;
+            int version = connectionVersion;
+            int attempt = ++reconnectAttempts;
+            int attemptTimeout = System.Math.Max(100,
+                System.Math.Min(activeSettings.Timeout, remainingMilliseconds / 3));
+            CommunicationSettings retrySettings = CopySettings(activeSettings, attemptTimeout);
+            statusControl.SetReconnecting(activeDeviceId, attempt,
+                System.Math.Max(0, (int)System.Math.Ceiling((reconnectDeadline - now).TotalSeconds)));
+
+            try
+            {
+                OperationResult<SensorReading> result = await Task.Run(() => ExecuteSafely(delegate
+                {
+                    modbusService.Connect(retrySettings);
+                    return modbusService.ReadReading();
+                }));
+
+                if (version != connectionVersion || !isReconnecting || IsDisposed)
+                {
+                    await DisconnectServiceAsync();
+                    return;
+                }
+
+                if (result.Error != null)
+                {
+                    await DisconnectServiceAsync();
+                    if (version != connectionVersion || !isReconnecting || IsDisposed)
+                        return;
+
+                    statusControl.RecordFailure();
+                    logControl.AddEntry("系统", "重连尝试 " + attempt, "失败", result.Error.Message, activeDeviceId);
+                    if (DateTime.Now >= reconnectDeadline)
+                    {
+                        await FinishReconnectTimeout();
+                        return;
+                    }
+
+                    nextReconnectAttempt = DateTime.Now.AddSeconds(5);
+                    statusControl.SetReconnecting(activeDeviceId, attempt,
+                        System.Math.Max(0, (int)System.Math.Ceiling((reconnectDeadline - DateTime.Now).TotalSeconds)));
+                    return;
+                }
+
+                if (DateTime.Now >= reconnectDeadline)
+                {
+                    await DisconnectServiceAsync();
+                    await FinishReconnectTimeout();
+                    return;
+                }
+
+                reconnectTimer.Stop();
+                isReconnecting = false;
+                string modeName = activeSettings.Mode == CommunicationMode.ModbusRtu ? "Modbus RTU" : "Modbus TCP";
+                statusControl.SetRunning(modeName, activeDeviceId);
+                logControl.AddEntry("系统", "通信恢复", "成功", "设备 " + activeDeviceId + " | " + modeName, activeDeviceId);
+                PublishReading(result.Value, modeName);
+                samplingTimer.Start();
+            }
+            catch (Exception ex)
+            {
+                if (version == connectionVersion && isReconnecting && !IsDisposed)
+                {
+                    await DisconnectServiceAsync();
+                    statusControl.RecordFailure();
+                    logControl.AddEntry("系统", "重连尝试 " + attempt, "失败", ex.Message, activeDeviceId);
+                    if (DateTime.Now >= reconnectDeadline)
+                        await FinishReconnectTimeout();
+                    else
+                    {
+                        nextReconnectAttempt = DateTime.Now.AddSeconds(5);
+                        statusControl.SetReconnecting(activeDeviceId, attempt,
+                            System.Math.Max(0, (int)System.Math.Ceiling((reconnectDeadline - DateTime.Now).TotalSeconds)));
+                    }
+                }
+            }
+            finally
+            {
+                reconnectAttemptInProgress = false;
+            }
+        }
+
+        private async Task FinishReconnectTimeout()
+        {
+            if (!isReconnecting || activeSettings == null || reconnectPromptShown)
+                return;
+
+            reconnectPromptShown = true;
+            string timedOutDevice = activeDeviceId;
+            reconnectTimer.Stop();
+            isReconnecting = false;
+            logControl.AddEntry("系统", "重连超时", "失败", "设备 " + timedOutDevice + " 超过 30 秒未恢复，已停止采样并断开连接。", timedOutDevice);
+            await StopCurrentCommunication(false, "重连超时，已停止采样并断开连接。");
+
+            if (!IsDisposed)
+                MessageBox.Show(this.FindForm(), "设备 " + timedOutDevice
+                    + " 在 30 秒内未恢复通信，程序已停止采样并断开连接。",
+                    "通信重连超时", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+
+        private async Task DisconnectServiceAsync()
+        {
+            await Task.Run(() => ExecuteSafely(delegate
+            {
+                modbusService.Disconnect();
+                return true;
+            }));
+        }
+
+        private static OperationResult<T> ExecuteSafely<T>(Func<T> operation)
+        {
+            var result = new OperationResult<T>();
+            try { result.Value = operation(); }
+            catch (Exception ex) { result.Error = ex; }
+            return result;
+        }
+
+        private static CommunicationSettings CopySettings(CommunicationSettings source, int timeout)
+        {
+            return new CommunicationSettings
+            {
+                Mode = source.Mode,
+                DeviceId = source.DeviceId,
+                SamplingInterval = source.SamplingInterval,
+                SerialPortName = source.SerialPortName,
+                BaudRate = source.BaudRate,
+                DataBits = source.DataBits,
+                Parity = source.Parity,
+                StopBits = source.StopBits,
+                IpAddress = source.IpAddress,
+                TcpPort = source.TcpPort,
+                UnitId = source.UnitId,
+                Timeout = timeout,
+                Function = source.Function,
+                TemperatureAddress = source.TemperatureAddress,
+                PressureAddress = source.PressureAddress,
+                TemperatureScale = source.TemperatureScale,
+                PressureScale = source.PressureScale,
+                SignedValues = source.SignedValues
+            };
         }
 
         private void PublishReading(SensorReading reading, string source)
@@ -232,12 +468,14 @@ namespace My_Industrial_Monitoring_Platform
             statusControl.RecordSuccess(reading.Timestamp);
             logControl.AddEntry("接收", "读取温度/压力", "成功",
                 source + " | " + reading.DeviceId + " | 温度 " + reading.Temperature.ToString("F2")
-                + " °C，压力 " + reading.Pressure.ToString("F2") + " MPa");
+                + " °C，压力 " + reading.Pressure.ToString("F2") + " MPa", reading.DeviceId);
         }
 
-        private async Task StopCurrentCommunication(bool writeLog)
+        private async Task StopCurrentCommunication(bool writeLog, string stoppedMessage = "当前未连接")
         {
             samplingTimer.Stop();
+            reconnectTimer.Stop();
+            isReconnecting = false;
             connectionVersion++;
             string stoppedDevice = activeDeviceId;
             CommunicationSettings stoppedSettings = activeSettings;
@@ -245,15 +483,15 @@ namespace My_Industrial_Monitoring_Platform
             activeSettings = null;
 
             if (stoppedSettings != null && stoppedSettings.Mode != CommunicationMode.Simulation)
-                await Task.Run(() => modbusService.Disconnect());
+                await DisconnectServiceAsync();
 
             if (!string.IsNullOrWhiteSpace(stoppedDevice))
             {
                 if (writeLog)
-                    logControl.AddEntry("系统", "断开连接", "成功", "设备 " + stoppedDevice);
+                    logControl.AddEntry("系统", "断开连接", "成功", "设备 " + stoppedDevice, stoppedDevice);
                 NotifyCommunicationStopped(stoppedDevice);
             }
-            statusControl.SetStopped();
+            statusControl.SetStopped(stoppedMessage);
         }
 
         private void NotifyCommunicationStopped(string deviceId)

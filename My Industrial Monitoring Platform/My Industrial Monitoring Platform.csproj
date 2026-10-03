@@ -96,6 +96,7 @@
     <Compile Include="CommunicationLogControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="CommunicationLogDB.cs" />
     <Compile Include="CommunicationUi.cs" />
     <Compile Include="ModbusCommunicationService.cs" />
     <Compile Include="HomeOverviewPage.cs">

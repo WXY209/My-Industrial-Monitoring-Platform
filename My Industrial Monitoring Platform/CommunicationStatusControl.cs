@@ -81,6 +81,15 @@ namespace My_Industrial_Monitoring_Platform
             note.Text = mode == "模拟" ? "数据由项目内置模拟器生成，不是实际设备通信。" : "已连接设备并开始采样。";
         }
 
+        public void SetReconnecting(string deviceId, int attempt, int remainingSeconds)
+        {
+            stateValue.Text = "●  通信中断：" + deviceId;
+            stateValue.ForeColor = Color.FromArgb(245, 158, 11);
+            note.Text = attempt == 0
+                ? "正在自动重连，超时剩余 " + remainingSeconds + " 秒。"
+                : "正在进行第 " + attempt + " 次重连，超时剩余 " + remainingSeconds + " 秒。";
+        }
+
         public void SetStopped(string message = "当前未连接")
         {
             stateValue.Text = "●  已停止";
