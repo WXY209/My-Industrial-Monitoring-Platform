@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Globalization;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace My_Industrial_Monitoring_Platform
@@ -12,9 +13,17 @@ namespace My_Industrial_Monitoring_Platform
     {
         private const int MaximumRows = 200;
         private readonly DataGridView grid;
+        private readonly ICommunicationLogService logService;
+        private long nextRowId;
 
-        public CommunicationLogControl()
+        public CommunicationLogControl() : this(new CommunicationLogService())
         {
+        }
+
+        public CommunicationLogControl(ICommunicationLogService logService)
+        {
+            if (logService == null) throw new ArgumentNullException("logService");
+            this.logService = logService;
             Panel body;
             Controls.Add(CommunicationUi.CreateCard("通信日志", out body));
             grid = CommunicationUi.CreateGrid("时间", "方向", "操作/数据", "结果", "说明");
@@ -27,31 +36,42 @@ namespace My_Industrial_Monitoring_Platform
 
             // 设计器预览时不访问 SQLite，避免打开控件设计器时触发数据库异常。
             if (LicenseManager.UsageMode != LicenseUsageMode.Designtime)
-                LoadRecentEntries();
+                Load += async (s, e) => await LoadRecentEntriesAsync();
         }
 
-        public void AddEntry(string direction, string operation, string result, string details, string deviceId = null)
+        public async void AddEntry(string direction, string operation, string result, string details, string deviceId = null)
         {
             DateTime timestamp = DateTime.Now;
-            string visibleDetails = details;
+            long rowId = ++nextRowId;
+            DataGridViewRow row = InsertRow(timestamp, direction, operation, result, details);
+            row.Tag = rowId;
             try
             {
-                CommunicationLogDB.AddEntry(timestamp, deviceId, direction, operation, result, details);
+                await logService.AddEntryAsync(timestamp, deviceId, direction, operation, result, details);
             }
             catch (Exception ex)
             {
-                // 日志写库失败时仍显示在界面，不能让日志故障中断通信流程。
-                visibleDetails += "（数据库保存失败：" + ex.Message + "）";
+                // 日志故障不应中断通信流程；只在对应的可见行补充错误信息。
+                if (!IsDisposed && !Disposing)
+                {
+                    foreach (DataGridViewRow current in grid.Rows)
+                    {
+                        if (current.Tag is long && (long)current.Tag == rowId)
+                        {
+                            current.Cells[4].Value = details + "（数据库保存失败：" + ex.Message + "）";
+                            break;
+                        }
+                    }
+                }
             }
-
-            InsertRow(timestamp, direction, operation, result, visibleDetails);
         }
 
-        private void LoadRecentEntries()
+        private async Task LoadRecentEntriesAsync()
         {
             try
             {
-                DataTable entries = CommunicationLogDB.GetRecentEntries(MaximumRows);
+                DataTable entries = await logService.GetRecentEntriesAsync(MaximumRows);
+                if (IsDisposed || Disposing) return;
                 for (int i = entries.Rows.Count - 1; i >= 0; i--)
                 {
                     DataRow row = entries.Rows[i];
@@ -67,7 +87,7 @@ namespace My_Industrial_Monitoring_Platform
             }
         }
 
-        private void InsertRow(DateTime timestamp, string direction, string operation, string result, string details)
+        private DataGridViewRow InsertRow(DateTime timestamp, string direction, string operation, string result, string details)
         {
             grid.Rows.Insert(0,
                 timestamp.ToString("yyyy-MM-dd HH:mm:ss"),
@@ -75,13 +95,14 @@ namespace My_Industrial_Monitoring_Platform
                 operation,
                 result,
                 details);
-            int rowIndex = 0;
-            grid.Rows[rowIndex].DefaultCellStyle.ForeColor = result == "成功"
+            DataGridViewRow row = grid.Rows[0];
+            row.DefaultCellStyle.ForeColor = result == "成功"
                 ? Color.FromArgb(51, 65, 85)
                 : Color.FromArgb(220, 38, 38);
 
             while (grid.Rows.Count > MaximumRows)
                 grid.Rows.RemoveAt(grid.Rows.Count - 1);
+            return row;
         }
     }
 }

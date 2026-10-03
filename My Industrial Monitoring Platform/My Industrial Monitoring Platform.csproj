@@ -70,6 +70,22 @@
     <Compile Include="UserManagementPage.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="Services\IUserManagementService.cs" />
+    <Compile Include="Services\UserManagementService.cs" />
+    <Compile Include="Services\IRecordService.cs" />
+    <Compile Include="Services\RecordService.cs" />
+    <Compile Include="Services\ICommunicationLogService.cs" />
+    <Compile Include="Services\CommunicationLogService.cs" />
+    <Compile Include="Services\IReadingPersistenceService.cs" />
+    <Compile Include="Services\ReadingPersistenceService.cs" />
+    <Compile Include="Services\IModbusCommunicationService.cs" />
+    <Compile Include="Services\IHomeOverviewDataService.cs" />
+    <Compile Include="Services\HomeOverviewDataService.cs" />
+    <Compile Include="Services\IAlarmPersistenceService.cs" />
+    <Compile Include="Services\AlarmPersistenceService.cs" />
+    <Compile Include="Services\IDeviceManagementService.cs" />
+    <Compile Include="Services\DeviceManagementService.cs" />
+    <Compile Include="Services\DatabaseWriteQueue.cs" />
     <Compile Include="Controls\UserListControl.cs">
       <SubType>UserControl</SubType>
     </Compile>

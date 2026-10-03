@@ -13,7 +13,7 @@ namespace My_Industrial_Monitoring_Platform
         private readonly RegisterMappingControl mappingControl;
         private readonly CommunicationLogControl logControl;
         private readonly MonitoringSimulator simulator = new MonitoringSimulator();
-        private readonly ModbusCommunicationService modbusService = new ModbusCommunicationService();
+        private readonly IModbusCommunicationService modbusService;
         private readonly Timer samplingTimer = new Timer();
         private readonly Timer reconnectTimer = new Timer();
         private CommunicationSettings activeSettings;
@@ -37,8 +37,20 @@ namespace My_Industrial_Monitoring_Platform
         public event Action<SensorReading> ReadingProduced;
         public event Action<string> CommunicationStopped;
 
-        public NetworkCommunicationPage()
+        public NetworkCommunicationPage() : this(new ModbusCommunicationService(), new CommunicationLogService())
         {
+        }
+
+        public NetworkCommunicationPage(IModbusCommunicationService modbusService)
+            : this(modbusService, new CommunicationLogService())
+        {
+        }
+
+        public NetworkCommunicationPage(IModbusCommunicationService modbusService, ICommunicationLogService communicationLogService)
+        {
+            if (modbusService == null) throw new ArgumentNullException("modbusService");
+            if (communicationLogService == null) throw new ArgumentNullException("communicationLogService");
+            this.modbusService = modbusService;
             BackColor = Color.FromArgb(241, 245, 249);
             Padding = new Padding(10);
 
@@ -58,7 +70,7 @@ namespace My_Industrial_Monitoring_Platform
             configControl = new CommunicationConfigControl { Dock = DockStyle.Fill, Margin = new Padding(0, 0, 6, 6) };
             statusControl = new CommunicationStatusControl { Dock = DockStyle.Fill, Margin = new Padding(6, 0, 0, 6) };
             mappingControl = new RegisterMappingControl { Dock = DockStyle.Fill, Margin = new Padding(0, 6, 6, 0) };
-            logControl = new CommunicationLogControl { Dock = DockStyle.Fill, Margin = new Padding(6, 6, 0, 0) };
+            logControl = new CommunicationLogControl(communicationLogService) { Dock = DockStyle.Fill, Margin = new Padding(6, 6, 0, 0) };
 
             layout.Controls.Add(configControl, 0, 0);
             layout.Controls.Add(statusControl, 1, 0);
@@ -72,11 +84,12 @@ namespace My_Industrial_Monitoring_Platform
             samplingTimer.Tick += SamplingTimer_Tick;
             reconnectTimer.Interval = 1000;
             reconnectTimer.Tick += ReconnectTimer_Tick;
-            Disposed += (sender, e) =>
+            Disposed += async (sender, e) =>
             {
                 samplingTimer.Stop();
                 reconnectTimer.Stop();
-                modbusService.Dispose();
+                try { await modbusService.DisconnectAsync(); }
+                catch { }
             };
         }
 
@@ -108,11 +121,11 @@ namespace My_Industrial_Monitoring_Platform
                 logControl.AddEntry("系统", "连接 " + modeName, "进行中", DescribeConnection(activeSettings), activeDeviceId);
 
                 CommunicationSettings settingsToConnect = activeSettings;
-                OperationResult<bool> connectResult = await Task.Run(() => ExecuteSafely(delegate
+                OperationResult<bool> connectResult = await ExecuteSafelyAsync(async delegate
                 {
-                    modbusService.Connect(settingsToConnect);
+                    await modbusService.ConnectAsync(settingsToConnect);
                     return true;
-                }));
+                });
                 if (version != connectionVersion || IsDisposed)
                 {
                     await DisconnectServiceAsync();
@@ -246,8 +259,8 @@ namespace My_Industrial_Monitoring_Platform
             pollInProgress = true;
             try
             {
-                OperationResult<SensorReading> readResult = await Task.Run(() => ExecuteSafely(
-                    delegate { return modbusService.ReadReading(); }));
+                OperationResult<SensorReading> readResult = await ExecuteSafelyAsync(
+                    () => modbusService.ReadReadingAsync());
                 if (version != connectionVersion || activeSettings == null || IsDisposed)
                     return;
 
@@ -329,11 +342,11 @@ namespace My_Industrial_Monitoring_Platform
 
             try
             {
-                OperationResult<SensorReading> result = await Task.Run(() => ExecuteSafely(delegate
+                OperationResult<SensorReading> result = await ExecuteSafelyAsync(async delegate
                 {
-                    modbusService.Connect(retrySettings);
-                    return modbusService.ReadReading();
-                }));
+                    await modbusService.ConnectAsync(retrySettings);
+                    return await modbusService.ReadReadingAsync();
+                });
 
                 if (version != connectionVersion || !isReconnecting || IsDisposed)
                 {
@@ -419,17 +432,17 @@ namespace My_Industrial_Monitoring_Platform
 
         private async Task DisconnectServiceAsync()
         {
-            await Task.Run(() => ExecuteSafely(delegate
+            await ExecuteSafelyAsync(async delegate
             {
-                modbusService.Disconnect();
+                await modbusService.DisconnectAsync();
                 return true;
-            }));
+            });
         }
 
-        private static OperationResult<T> ExecuteSafely<T>(Func<T> operation)
+        private static async Task<OperationResult<T>> ExecuteSafelyAsync<T>(Func<Task<T>> operation)
         {
             var result = new OperationResult<T>();
-            try { result.Value = operation(); }
+            try { result.Value = await operation(); }
             catch (Exception ex) { result.Error = ex; }
             return result;
         }

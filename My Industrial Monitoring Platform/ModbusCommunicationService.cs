@@ -2,12 +2,13 @@ using System;
 using System.IO.Ports;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using Modbus.Device;
 
 namespace My_Industrial_Monitoring_Platform
 {
     /// <summary>使用 NModbus4 连接 Modbus RTU/TCP 并读取温度、压力寄存器。</summary>
-    public sealed class ModbusCommunicationService : IDisposable
+    public sealed class ModbusCommunicationService : IModbusCommunicationService
     {
         private readonly object syncRoot = new object();
         private IModbusMaster master;
@@ -15,7 +16,12 @@ namespace My_Industrial_Monitoring_Platform
         private SerialPort serialPort;
         private CommunicationSettings settings;
 
-        public void Connect(CommunicationSettings connectionSettings)
+        public Task ConnectAsync(CommunicationSettings connectionSettings)
+        {
+            return Task.Run(() => ConnectCore(connectionSettings));
+        }
+
+        private void ConnectCore(CommunicationSettings connectionSettings)
         {
             if (connectionSettings == null)
                 throw new ArgumentNullException("connectionSettings");
@@ -44,7 +50,12 @@ namespace My_Industrial_Monitoring_Platform
             }
         }
 
-        public SensorReading ReadReading()
+        public Task<SensorReading> ReadReadingAsync()
+        {
+            return Task.Run(() => ReadReadingCore());
+        }
+
+        private SensorReading ReadReadingCore()
         {
             lock (syncRoot)
             {
@@ -58,6 +69,11 @@ namespace My_Industrial_Monitoring_Platform
 
                 return new SensorReading(settings.DeviceId, DateTime.Now, Math.Round(temperature, 3), Math.Round(pressure, 3));
             }
+        }
+
+        public Task DisconnectAsync()
+        {
+            return Task.Run(() => Disconnect());
         }
 
         public void Disconnect()

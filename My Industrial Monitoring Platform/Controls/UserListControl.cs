@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace My_Industrial_Monitoring_Platform
@@ -10,9 +11,17 @@ namespace My_Industrial_Monitoring_Platform
     {
         private readonly DataGridView userGrid;
         private readonly Label feedbackLabel;
+        private readonly IUserManagementService userService;
+        private readonly Button refreshButton;
 
-        public UserListControl()
+        public UserListControl() : this(new UserManagementService())
         {
+        }
+
+        public UserListControl(IUserManagementService userService)
+        {
+            if (userService == null) throw new ArgumentNullException("userService");
+            this.userService = userService;
             BackColor = Color.White;
             Padding = new Padding(16);
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, BackColor = Color.White, Margin = Padding.Empty };
@@ -22,10 +31,10 @@ namespace My_Industrial_Monitoring_Platform
 
             var header = new Panel { Dock = DockStyle.Fill, BackColor = Color.White };
             header.Controls.Add(new Label { Text = "♟  用户列表", AutoSize = true, Font = new Font("微软雅黑", 11F, FontStyle.Bold), ForeColor = Color.FromArgb(35, 48, 66), Location = new Point(0, 5) });
-            var refresh = new Button { Text = "⟳ 刷新", AutoSize = true, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(55, 130, 245), ForeColor = Color.White, Font = new Font("微软雅黑", 9F), Location = new Point(112, 1), Cursor = Cursors.Hand };
-            refresh.FlatAppearance.BorderSize = 0;
-            refresh.Click += (s, e) => RefreshUsers();
-            header.Controls.Add(refresh);
+            refreshButton = new Button { Text = "⟳ 刷新", AutoSize = true, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(55, 130, 245), ForeColor = Color.White, Font = new Font("微软雅黑", 9F), Location = new Point(112, 1), Cursor = Cursors.Hand };
+            refreshButton.FlatAppearance.BorderSize = 0;
+            refreshButton.Click += async (s, e) => await RefreshUsersAsync();
+            header.Controls.Add(refreshButton);
             layout.Controls.Add(header, 0, 0);
 
             userGrid = new DataGridView
@@ -54,16 +63,22 @@ namespace My_Industrial_Monitoring_Platform
                 userGrid.Rows.Add("admin", "管理员", "正常", "删除");
                 userGrid.Rows.Add("operator", "用户", "正常", "删除");
             }
-            else RefreshUsers();
+            else Load += async (s, e) => await RefreshUsersAsync();
         }
 
-        public void RefreshUsers()
+        public async Task RefreshUsersAsync()
         {
-            try { userGrid.DataSource = UserDB.GetUsers(); }
+            if (IsDisposed || Disposing) return;
+            refreshButton.Enabled = false;
+            try
+            {
+                userGrid.DataSource = await userService.GetUsersAsync();
+            }
             catch (Exception ex) { ShowFeedback("读取用户失败：" + ex.Message, Color.FromArgb(210, 55, 65)); }
+            finally { if (!IsDisposed && !Disposing) refreshButton.Enabled = true; }
         }
 
-        private void UserGrid_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private async void UserGrid_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || userGrid.Columns[e.ColumnIndex].Name != "Delete") return;
             string username = Convert.ToString(userGrid.Rows[e.RowIndex].Cells["Username"].Value);
@@ -74,7 +89,7 @@ namespace My_Industrial_Monitoring_Platform
             if (MessageBox.Show("确定删除用户“" + username + "”吗？", "确认删除", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
             try
             {
-                if (UserDB.DeleteUser(username)) { RefreshUsers(); ShowFeedback("用户“" + username + "”已删除。", Color.FromArgb(20, 145, 105)); }
+                if (await userService.DeleteUserAsync(username)) { await RefreshUsersAsync(); ShowFeedback("用户“" + username + "”已删除。", Color.FromArgb(20, 145, 105)); }
                 else ShowFeedback("删除失败，用户可能已经不存在。", Color.FromArgb(210, 55, 65));
             }
             catch (Exception ex) { ShowFeedback("删除失败：" + ex.Message, Color.FromArgb(210, 55, 65)); }

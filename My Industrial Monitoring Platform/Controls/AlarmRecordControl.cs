@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Globalization;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace My_Industrial_Monitoring_Platform
@@ -15,50 +16,60 @@ namespace My_Industrial_Monitoring_Platform
         private ComboBox typeFilter;
         private Label pageInfo;
         private NumericUpDown jumpPage;
+        private readonly IRecordService recordService;
+        private int loadVersion;
 
-        public AlarmRecordControl()
+        public AlarmRecordControl() : this(new RecordService())
         {
+        }
+
+        public AlarmRecordControl(IRecordService recordService)
+        {
+            if (recordService == null) throw new ArgumentNullException("recordService");
+            this.recordService = recordService;
             RecordControlFactory.Build(this, "⚠  报警记录", false);
             grid = FindControl<DataGridView>("alarmGrid");
             typeFilter = FindControl<ComboBox>("alarmType");
             pageInfo = FindControl<Label>("alarmPageInfo");
             jumpPage = FindControl<NumericUpDown>("alarmJump");
 
-            FindControl<Button>("alarmRefresh").Click += (s, e) => LoadPage(currentPage);
-            typeFilter.SelectedIndexChanged += (s, e) => LoadPage(1);
-            FindControl<Button>("alarmFirst").Click += (s, e) => LoadPage(1);
-            FindControl<Button>("alarmPrevious").Click += (s, e) => LoadPage(currentPage - 1);
-            FindControl<Button>("alarmNext").Click += (s, e) => LoadPage(currentPage + 1);
-            FindControl<Button>("alarmLast").Click += (s, e) => LoadPage(totalPages);
-            FindControl<Button>("alarmGo").Click += (s, e) => LoadPage((int)jumpPage.Value);
+            FindControl<Button>("alarmRefresh").Click += async (s, e) => await LoadPageAsync(currentPage);
+            typeFilter.SelectedIndexChanged += async (s, e) => await LoadPageAsync(1);
+            FindControl<Button>("alarmFirst").Click += async (s, e) => await LoadPageAsync(1);
+            FindControl<Button>("alarmPrevious").Click += async (s, e) => await LoadPageAsync(currentPage - 1);
+            FindControl<Button>("alarmNext").Click += async (s, e) => await LoadPageAsync(currentPage + 1);
+            FindControl<Button>("alarmLast").Click += async (s, e) => await LoadPageAsync(totalPages);
+            FindControl<Button>("alarmGo").Click += async (s, e) => await LoadPageAsync((int)jumpPage.Value);
         }
 
-        public void LoadRecords()
+        public Task LoadRecordsAsync()
         {
-            LoadPage(currentPage);
+            return LoadPageAsync(currentPage);
         }
 
-        private void LoadPage(int requestedPage)
+        private async Task LoadPageAsync(int requestedPage)
         {
+            int requestVersion = ++loadVersion;
             string alarmType = typeFilter.SelectedIndex <= 0 ? string.Empty : typeFilter.SelectedItem.ToString();
-            int total = AlarmDB.GetAlarmCount(alarmType);
-            totalPages = Math.Max(1, (total + PageSize - 1) / PageSize);
-            currentPage = Math.Max(1, Math.Min(requestedPage, totalPages));
-
-            DataTable rows = AlarmDB.GetAlarmPage(alarmType, currentPage, PageSize);
-            var displayRows = new DataTable();
-            foreach (DataColumn column in rows.Columns)
-                displayRows.Columns.Add(column.ColumnName, typeof(string));
-            foreach (DataRow row in rows.Rows)
+            try
             {
-                displayRows.Rows.Add(row["编号"].ToString(), row["设备"].ToString(), row["报警类型"].ToString(),
-                    row["报警值"].ToString(), FormatTime(row["开始时间"]), FormatTime(row["结束时间"]), row["状态"].ToString());
+                int total = await recordService.GetAlarmCountAsync(alarmType);
+                if (requestVersion != loadVersion || IsDisposed || Disposing) return;
+                int pages = Math.Max(1, (total + PageSize - 1) / PageSize);
+                int targetPage = Math.Max(1, Math.Min(requestedPage, pages));
+                DataTable rows = await recordService.GetAlarmPageAsync(alarmType, targetPage, PageSize);
+                if (requestVersion != loadVersion || IsDisposed || Disposing) return;
+
+                var displayRows = new DataTable();
+                foreach (DataColumn column in rows.Columns) displayRows.Columns.Add(column.ColumnName, typeof(string));
+                foreach (DataRow row in rows.Rows)
+                    displayRows.Rows.Add(row["编号"].ToString(), row["设备"].ToString(), row["报警类型"].ToString(),
+                        row["报警值"].ToString(), FormatTime(row["开始时间"]), FormatTime(row["结束时间"]), row["状态"].ToString());
+                totalPages = pages; currentPage = targetPage; grid.DataSource = displayRows;
+                pageInfo.Text = "第 " + currentPage + "/" + totalPages + " 页（共 " + total + " 条）";
+                jumpPage.Maximum = totalPages; jumpPage.Value = currentPage; UpdatePagerButtons();
             }
-            grid.DataSource = displayRows;
-            pageInfo.Text = "第 " + currentPage + "/" + totalPages + " 页（共 " + total + " 条）";
-            jumpPage.Maximum = totalPages;
-            jumpPage.Value = currentPage;
-            UpdatePagerButtons();
+            catch (Exception ex) { if (!IsDisposed && !Disposing) MessageBox.Show("查询报警记录失败：" + ex.Message, "数据记录", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
         private static string FormatTime(object value)

@@ -5,6 +5,8 @@ using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace My_Industrial_Monitoring_Platform
@@ -22,14 +24,23 @@ namespace My_Industrial_Monitoring_Platform
             public string Peak;
             public DateTime StartTime;
             public DateTime? EndTime;
+            public Task<int> PersistenceTask;
         }
 
         private const int MaximumAlarmRecords = 75;
         private readonly Color pageBackground = Color.FromArgb(241, 245, 249);
         private readonly MonitoringSimulator simulator = new MonitoringSimulator();
+        private readonly IReadingPersistenceService readingPersistenceService;
+        private readonly IAlarmPersistenceService alarmPersistenceService;
+        private readonly IHomeOverviewDataService homeDataService;
+        private readonly IDeviceManagementService deviceManagementService;
         private readonly Timer simulationTimer = new Timer { Interval = 1000 };
         private readonly Dictionary<string, List<SensorReading>> readingsByDevice =
             new Dictionary<string, List<SensorReading>>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> loadedReadingDevices =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Task> readingLoadsInProgress =
+            new Dictionary<string, Task>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> runningDevices =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> communicationDevices =
@@ -46,8 +57,35 @@ namespace My_Industrial_Monitoring_Platform
         private string selectedDevice = "DEV-001";
         private bool resetAlarmPagePending;
 
-        public HomeOverviewPage()
+        public HomeOverviewPage() : this(new ReadingPersistenceService(), new AlarmPersistenceService(), new HomeOverviewDataService(), new DeviceManagementService())
         {
+        }
+
+        public HomeOverviewPage(IReadingPersistenceService readingPersistenceService)
+            : this(readingPersistenceService, new AlarmPersistenceService(), new HomeOverviewDataService())
+        {
+        }
+
+        public HomeOverviewPage(IReadingPersistenceService readingPersistenceService, IHomeOverviewDataService homeDataService)
+            : this(readingPersistenceService, new AlarmPersistenceService(), homeDataService, new DeviceManagementService())
+        {
+        }
+
+        public HomeOverviewPage(IReadingPersistenceService readingPersistenceService, IAlarmPersistenceService alarmPersistenceService, IHomeOverviewDataService homeDataService)
+            : this(readingPersistenceService, alarmPersistenceService, homeDataService, new DeviceManagementService())
+        {
+        }
+
+        public HomeOverviewPage(IReadingPersistenceService readingPersistenceService, IAlarmPersistenceService alarmPersistenceService, IHomeOverviewDataService homeDataService, IDeviceManagementService deviceManagementService)
+        {
+            if (readingPersistenceService == null) throw new ArgumentNullException("readingPersistenceService");
+            if (alarmPersistenceService == null) throw new ArgumentNullException("alarmPersistenceService");
+            if (homeDataService == null) throw new ArgumentNullException("homeDataService");
+            if (deviceManagementService == null) throw new ArgumentNullException("deviceManagementService");
+            this.readingPersistenceService = readingPersistenceService;
+            this.alarmPersistenceService = alarmPersistenceService;
+            this.homeDataService = homeDataService;
+            this.deviceManagementService = deviceManagementService;
             BackColor = pageBackground;
             Padding = new Padding(10);
             BuildLayout();
@@ -62,12 +100,17 @@ namespace My_Industrial_Monitoring_Platform
             Disposed += (sender, e) => simulationTimer.Dispose();
         }
 
-        private void HomeOverviewPage_Load(object sender, EventArgs e)
+        private async void HomeOverviewPage_Load(object sender, EventArgs e)
         {
             if (IsDesignTime())
                 return;
 
-            LoadSavedData();
+            try { await LoadSavedDataAsync(); }
+            catch (Exception ex)
+            {
+                if (!IsDisposed && !Disposing)
+                    MessageBox.Show("加载首页数据失败：" + ex.Message, "首页总览", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private bool IsDesignTime()
@@ -87,45 +130,99 @@ namespace My_Industrial_Monitoring_Platform
                 || processName.Equals("XDesProc", StringComparison.OrdinalIgnoreCase);
         }
 
-        private void LoadSavedData()
+        private async Task LoadSavedDataAsync()
         {
-            DataTable deviceTable = DeviceDB.GetActiveDevices();
+            IList<string> activeDeviceIds = await homeDataService.GetActiveDeviceIdsAsync();
+            if (IsDisposed || Disposing) return;
             devices.Clear();
-            foreach (DataRow row in deviceTable.Rows)
-                devices.Add(row["DeviceId"].ToString());
-
-            if (devices.Count == 0)
-            {
-                string defaultId = DeviceDB.GetNextDeviceId();
-                DeviceDB.AddDevice(defaultId, defaultId);
-                devices.Add(defaultId);
-            }
+            devices.AddRange(activeDeviceIds);
 
             selectedDevice = devices[0];
             foreach (string deviceId in devices)
             {
-                LoadSavedReadings(deviceId);
+                List<SensorReading> savedReadings = await homeDataService.GetRecentReadingsAsync(deviceId, 11);
+                if (IsDisposed || Disposing) return;
+                readingsByDevice[deviceId] = savedReadings;
+                loadedReadingDevices.Add(deviceId);
             }
 
             overviewToolbarControl.SetDevices(devices, selectedDevice);
-            LoadSavedAlarms();
+            DataTable savedAlarms = await homeDataService.GetLatestAlarmsAsync(MaximumAlarmRecords);
+            if (IsDisposed || Disposing) return;
+            LoadSavedAlarms(savedAlarms);
             RenderDeviceHistory(selectedDevice);
             ShowCachedDeviceSummary(selectedDevice);
             UpdateMonitoringControls();
         }
 
-        private void LoadSavedReadings(string deviceId)
+        private async Task EnsureReadingsLoadedAsync(string deviceId)
         {
-            if (!readingsByDevice.ContainsKey(deviceId))
-                readingsByDevice.Add(deviceId, ReadingDB.GetRecentReadings(deviceId, 11));
+            if (loadedReadingDevices.Contains(deviceId)) return;
+
+            Task loadTask;
+            if (!readingLoadsInProgress.TryGetValue(deviceId, out loadTask))
+            {
+                loadTask = LoadReadingsIntoCacheAsync(deviceId);
+                readingLoadsInProgress[deviceId] = loadTask;
+                if (loadTask.IsCompleted)
+                    readingLoadsInProgress.Remove(deviceId);
+            }
+
+            await loadTask;
         }
 
-        private void LoadSavedAlarms()
+        private async Task LoadReadingsIntoCacheAsync(string deviceId)
+        {
+            try
+            {
+                List<SensorReading> savedReadings = await homeDataService.GetRecentReadingsAsync(deviceId, 11);
+                if (IsDisposed || Disposing) return;
+
+                List<SensorReading> currentReadings;
+                if (!readingsByDevice.TryGetValue(deviceId, out currentReadings))
+                    currentReadings = new List<SensorReading>();
+
+                // 读取期间可能已经收到新采样；合并并按时间保留最新 11 条，避免覆盖新数据。
+                var combined = savedReadings.Concat(currentReadings)
+                    .GroupBy(reading => reading.Timestamp)
+                    .Select(group => group.Last())
+                    .OrderBy(reading => reading.Timestamp)
+                    .ToList();
+                if (combined.Count > 11)
+                    combined = combined.Skip(combined.Count - 11).ToList();
+
+                readingsByDevice[deviceId] = combined;
+                loadedReadingDevices.Add(deviceId);
+            }
+            finally
+            {
+                readingLoadsInProgress.Remove(deviceId);
+            }
+        }
+
+        private async void EnsureReadingsLoadedInBackground(string deviceId)
+        {
+            try
+            {
+                await EnsureReadingsLoadedAsync(deviceId);
+                if (!IsDisposed && !Disposing
+                    && string.Equals(deviceId, selectedDevice, StringComparison.OrdinalIgnoreCase))
+                {
+                    RenderDeviceHistory(deviceId);
+                    ShowCachedDeviceSummary(deviceId);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowDatabaseError("设备 " + deviceId + " 的历史采样读取失败。", ex);
+            }
+        }
+
+        private void LoadSavedAlarms(DataTable table)
         {
             alarmRecords.Clear();
             activeAlarmsByDevice.Clear();
             alarmStateByDevice.Clear();
-            DataTable table = AlarmDB.GetLatestAlarms(MaximumAlarmRecords);
             foreach (DataRow row in table.Rows)
             {
                 DateTime startTime = DateTime.Parse(row["StartTime"].ToString(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
@@ -212,7 +309,7 @@ namespace My_Industrial_Monitoring_Platform
             ShowCachedDeviceSummary(selectedDevice);
         }
 
-        private void SelectDevice(string deviceId)
+        private async void SelectDevice(string deviceId)
         {
             if (string.Equals(deviceId, selectedDevice, StringComparison.OrdinalIgnoreCase))
                 return;
@@ -220,10 +317,32 @@ namespace My_Industrial_Monitoring_Platform
             selectedDevice = deviceId;
             overviewToolbarControl.SetSelectedDevice(selectedDevice);
 
-            LoadSavedReadings(selectedDevice);
+            if (!loadedReadingDevices.Contains(selectedDevice))
+            {
+                overviewChartControl.ShowReadings(null);
+                overviewToolbarControl.SetValues(null, null);
+                overviewToolbarControl.SetBanner("正在加载 " + selectedDevice + " 的历史数据…", false);
+            }
+            UpdateMonitoringControls();
+
+            try
+            {
+                await EnsureReadingsLoadedAsync(selectedDevice);
+            }
+            catch (Exception ex)
+            {
+                if (!IsDisposed && !Disposing)
+                    MessageBox.Show("加载设备 " + selectedDevice + " 的历史采样失败。\r\n" + ex.Message,
+                        "数据库错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (IsDisposed || Disposing
+                || !string.Equals(deviceId, selectedDevice, StringComparison.OrdinalIgnoreCase))
+                return;
+
             RenderDeviceHistory(selectedDevice);
             ShowCachedDeviceSummary(selectedDevice);
-            UpdateMonitoringControls();
         }
 
         private void UpdateMonitoringControls()
@@ -233,10 +352,20 @@ namespace My_Industrial_Monitoring_Platform
                 && !communicationDevices.Contains(selectedDevice), runningDevices.Contains(selectedDevice));
         }
 
-        private void AddDevice_Click(object sender, EventArgs e)
+        private async void AddDevice_Click(object sender, EventArgs e)
         {
-            string newDeviceId = DeviceDB.GetNextDeviceId();
-            if (!DeviceDB.AddDevice(newDeviceId, newDeviceId))
+            string newDeviceId;
+            try
+            {
+                newDeviceId = await deviceManagementService.AddNextDeviceAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("添加设备失败。\r\n" + ex.Message, "添加失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(newDeviceId))
             {
                 MessageBox.Show("设备编号已存在，请重试。", "添加失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
@@ -247,7 +376,7 @@ namespace My_Industrial_Monitoring_Platform
             SelectDevice(newDeviceId);
         }
 
-        private void DeleteDevice_Click(object sender, EventArgs e)
+        private async void DeleteDevice_Click(object sender, EventArgs e)
         {
             if (devices.Count <= 1)
             {
@@ -264,12 +393,35 @@ namespace My_Industrial_Monitoring_Platform
                 return;
 
             string removedDevice = selectedDevice;
-            if (DeviceDB.GetActiveCount() <= 1)
+            int activeCount;
+            try
+            {
+                activeCount = await deviceManagementService.GetActiveCountAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("检查设备数量失败。\r\n" + ex.Message, "删除失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (activeCount <= 1)
             {
                 MessageBox.Show("至少需要保留一台正常设备。", "无法删除", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            if (!DeviceDB.SetDeleted(removedDevice, true))
+            bool deleted;
+            try
+            {
+                deleted = await deviceManagementService.SetDeletedAsync(removedDevice, true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("删除设备失败。\r\n" + ex.Message, "删除失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (IsDisposed || Disposing) return;
+            if (!deleted)
             {
                 MessageBox.Show("数据库没有更新该设备，请重试。", "删除失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
@@ -284,15 +436,30 @@ namespace My_Industrial_Monitoring_Platform
             readingsByDevice.Remove(removedDevice);
             simulator.RemoveDevice(removedDevice);
 
-            overviewToolbarControl.SetDevices(devices, devices[0]);
-            selectedDevice = string.Empty;
-            SelectDevice(devices[0]);
-            UpdateMonitoringControls();
+            bool selectionWasDeleted = string.Equals(selectedDevice, removedDevice, StringComparison.OrdinalIgnoreCase);
+            if (selectionWasDeleted)
+                selectedDevice = string.Empty;
+            string nextSelection = selectionWasDeleted ? devices[0] : selectedDevice;
+            overviewToolbarControl.SetDevices(devices, nextSelection);
+            if (selectionWasDeleted)
+                SelectDevice(nextSelection);
+            else
+                UpdateMonitoringControls();
         }
 
-        private void RestoreDevice_Click(object sender, EventArgs e)
+        private async void RestoreDevice_Click(object sender, EventArgs e)
         {
-            DataTable deletedDevices = DeviceDB.GetDeletedDevices();
+            DataTable deletedDevices;
+            try
+            {
+                deletedDevices = await deviceManagementService.GetDeletedDevicesAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("读取已删除设备失败。\r\n" + ex.Message, "设备恢复", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            if (IsDisposed || Disposing) return;
             if (deletedDevices.Rows.Count == 0)
             {
                 MessageBox.Show(FindForm(), "目前没有已删除的设备。", "设备恢复", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -356,7 +523,7 @@ namespace My_Industrial_Monitoring_Platform
                 };
                 var closeButton = new Button { Text = "关闭", AutoSize = true };
                 var restoreButton = new Button { Text = "恢复所选设备", AutoSize = true };
-                restoreButton.Click += (restoreSender, restoreArgs) =>
+                restoreButton.Click += async (restoreSender, restoreArgs) =>
                 {
                     if (grid.CurrentRow == null)
                     {
@@ -365,8 +532,26 @@ namespace My_Industrial_Monitoring_Platform
                     }
 
                     string deviceId = Convert.ToString(grid.CurrentRow.Cells[0].Value);
-                    if (!DeviceDB.SetDeleted(deviceId, false))
+                    restoreButton.Enabled = false;
+                    closeButton.Enabled = false;
+                    bool restored;
+                    try
                     {
+                        restored = await deviceManagementService.SetDeletedAsync(deviceId, false);
+                    }
+                    catch (Exception ex)
+                    {
+                        restoreButton.Enabled = true;
+                        closeButton.Enabled = true;
+                        MessageBox.Show(dialog, "恢复设备失败。\r\n" + ex.Message, "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    if (dialog.IsDisposed) return;
+                    if (!restored)
+                    {
+                        restoreButton.Enabled = true;
+                        closeButton.Enabled = true;
                         MessageBox.Show(dialog, "恢复失败，请重试。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
@@ -456,11 +641,12 @@ namespace My_Industrial_Monitoring_Platform
             List<SensorReading> deviceReadings;
             if (!readingsByDevice.TryGetValue(deviceId, out deviceReadings))
             {
-                LoadSavedReadings(deviceId);
-                deviceReadings = readingsByDevice[deviceId];
+                deviceReadings = new List<SensorReading>();
+                readingsByDevice[deviceId] = deviceReadings;
+                EnsureReadingsLoadedInBackground(deviceId);
             }
 
-            ReadingDB.AddReading(reading);
+            SaveReadingInBackground(reading);
 
             deviceReadings.Add(reading);
             if (deviceReadings.Count > 11)
@@ -506,6 +692,27 @@ namespace My_Industrial_Monitoring_Platform
             }
 
             alarmStateByDevice[deviceId] = alarm;
+        }
+
+        private async void SaveReadingInBackground(SensorReading reading)
+        {
+            try
+            {
+                await readingPersistenceService.SaveAsync(reading);
+            }
+            catch (Exception ex)
+            {
+                if (IsDisposed || Disposing) return;
+                Action showError = () => MessageBox.Show(
+                    "设备 " + reading.DeviceId + " 的采样数据保存失败。\r\n" + ex.Message,
+                    "数据库错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (InvokeRequired)
+                {
+                    try { BeginInvoke(showError); }
+                    catch (InvalidOperationException) { }
+                }
+                else showError();
+            }
         }
 
         private void RenderDeviceHistory(string deviceId)
@@ -561,7 +768,7 @@ namespace My_Industrial_Monitoring_Platform
             if (activeAlarmsByDevice.TryGetValue(deviceId, out activeAlarm))
             {
                 activeAlarm.EndTime = endTime;
-                AlarmDB.CloseAlarm(activeAlarm.Id, endTime);
+                CloseAlarmInBackground(activeAlarm, endTime);
                 activeAlarmsByDevice.Remove(deviceId);
             }
 
@@ -577,12 +784,13 @@ namespace My_Industrial_Monitoring_Platform
 
             var alarm = new AlarmRecord
             {
-                Id = AlarmDB.AddAlarm(reading, reason, 60.0, 1.8),
                 Reading = reading,
                 Reason = reason,
                 Peak = peak,
                 StartTime = reading.Timestamp
             };
+            alarm.PersistenceTask = alarmPersistenceService.AddAsync(reading, reason, 60.0, 1.8);
+            PersistAlarmInBackground(alarm);
             alarmRecords.Insert(0, alarm);
             activeAlarmsByDevice[reading.DeviceId] = alarm;
             alarmStateByDevice[reading.DeviceId] = true;
@@ -593,6 +801,65 @@ namespace My_Industrial_Monitoring_Platform
             // 新报警加入列表顶部，切回第一页让它立即可见。
             resetAlarmPagePending = true;
             RenderAlarmPage();
+        }
+
+        private async void PersistAlarmInBackground(AlarmRecord alarm)
+        {
+            try
+            {
+                alarm.Id = await alarm.PersistenceTask;
+            }
+            catch (Exception ex)
+            {
+                ShowAlarmPersistenceError(alarm.Reading.DeviceId, "新增报警", ex);
+            }
+        }
+
+        private async void CloseAlarmInBackground(AlarmRecord alarm, DateTime endTime)
+        {
+            int alarmId;
+            try
+            {
+                alarmId = alarm.PersistenceTask != null
+                    ? await alarm.PersistenceTask
+                    : alarm.Id;
+            }
+            catch (Exception ex)
+            {
+                // 新增失败已由 PersistAlarmInBackground 报告；没有数据库记录可更新。
+                System.Diagnostics.Debug.WriteLine(ex);
+                return;
+            }
+
+            if (alarmId <= 0) return;
+            alarm.Id = alarmId;
+            try
+            {
+                await alarmPersistenceService.CloseAsync(alarmId, endTime);
+            }
+            catch (Exception ex)
+            {
+                ShowAlarmPersistenceError(alarm.Reading.DeviceId, "更新报警解除时间", ex);
+            }
+        }
+
+        private void ShowAlarmPersistenceError(string deviceId, string action, Exception exception)
+        {
+            ShowDatabaseError("设备 " + deviceId + " 的" + action + "保存失败。", exception);
+        }
+
+        private void ShowDatabaseError(string message, Exception exception)
+        {
+            if (IsDisposed || Disposing) return;
+            Action showError = () => MessageBox.Show(
+                message + "\r\n" + exception.Message,
+                "数据库错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            if (InvokeRequired)
+            {
+                try { BeginInvoke(showError); }
+                catch (InvalidOperationException) { }
+            }
+            else showError();
         }
 
         private void RenderAlarmPage()

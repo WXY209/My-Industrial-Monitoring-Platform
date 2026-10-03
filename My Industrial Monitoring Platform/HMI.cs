@@ -25,10 +25,10 @@ namespace My_Industrial_Monitoring_Platform
             networkCommunicationPage.CommunicationStopped += homeOverviewPage.CommunicationStopped;
             button1.Click += (sender, e) => ShowPage(homeOverviewPage, button1, "首页总览");
             button5.Click += (sender, e) => ShowPage(networkCommunicationPage, button5, "网络通讯");
-            button6.Click += (sender, e) =>
+            button6.Click += async (sender, e) =>
             {
                 ShowPage(dataRecordPage, button6, "数据记录");
-                dataRecordPage.LoadRecords();
+                await dataRecordPage.LoadRecordsAsync();
             };
             button7.Click += (sender, e) => ShowPage(userManagementPage, button7, "用户管理");
             ShowPage(homeOverviewPage, button1, "首页总览");
