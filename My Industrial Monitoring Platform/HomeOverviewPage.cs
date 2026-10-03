@@ -115,6 +115,7 @@ namespace My_Industrial_Monitoring_Platform
 
         private bool IsDesignTime()
         {
+            // 设计器预览时不访问数据库，避免 Visual Studio 加载控件时触发 SQLite。
             if (LicenseManager.UsageMode == LicenseUsageMode.Designtime || DesignMode)
                 return true;
 
@@ -132,6 +133,7 @@ namespace My_Industrial_Monitoring_Platform
 
         private async Task LoadSavedDataAsync()
         {
+            // 首页启动时加载活动设备、每台设备的近期采样和最近报警。
             IList<string> activeDeviceIds = await homeDataService.GetActiveDeviceIdsAsync();
             if (IsDisposed || Disposing) return;
             devices.Clear();
@@ -157,6 +159,7 @@ namespace My_Industrial_Monitoring_Platform
 
         private async Task EnsureReadingsLoadedAsync(string deviceId)
         {
+            // 同一设备已有读取任务时复用它，避免重复查询历史采样。
             if (loadedReadingDevices.Contains(deviceId)) return;
 
             Task loadTask;
@@ -637,6 +640,7 @@ namespace My_Industrial_Monitoring_Platform
 
         private void ProcessReading(SensorReading reading, bool fromCommunication)
         {
+            // 将读数加入设备缓存、更新当前曲线，并按阈值新增或解除报警。
             string deviceId = reading.DeviceId;
             List<SensorReading> deviceReadings;
             if (!readingsByDevice.TryGetValue(deviceId, out deviceReadings))

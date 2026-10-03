@@ -37,6 +37,7 @@ namespace My_Industrial_Monitoring_Platform
 
         private void ShowPage(Control page, Button selectedButton, string pageName)
         {
+            // 同步切换内容区、页面标题和左侧导航选中状态。
             homeOverviewPage.Visible = page == homeOverviewPage;
             networkCommunicationPage.Visible = page == networkCommunicationPage;
             userManagementPage.Visible = page == userManagementPage;

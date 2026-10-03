@@ -32,6 +32,7 @@ namespace My_Industrial_Monitoring_Platform
 
         public Task LoadRecordsAsync()
         {
+            // 两个记录控件并行刷新各自的查询结果。
             return Task.WhenAll(historyControl.LoadRecordsAsync(), alarmControl.LoadRecordsAsync());
         }
     }

@@ -19,11 +19,7 @@ namespace My_Industrial_Monitoring_Platform
         {
             InitializeComponent();
         }
-        /// <summary>
-        /// 登录功能
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <summary>验证账号密码，登录成功后打开工业监控主界面。</summary>
         private async void Loginbutton_Click(object sender, EventArgs e)
         {
             if (isProcessingUserAction)
@@ -52,11 +48,7 @@ namespace My_Industrial_Monitoring_Platform
             }
             finally { SetUserActionBusy(false); }
         }
-        /// <summary>
-        /// 注册功能
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <summary>检查注册输入并将新账号写入数据库。</summary>
         private async void Registerbutton_Click(object sender, EventArgs e)
         {
             if (isProcessingUserAction)

@@ -252,6 +252,7 @@ namespace My_Industrial_Monitoring_Platform
 
         private async Task PollModbusOnce(int version)
         {
+            // 后台读取寄存器；连接版本用于丢弃断开或重连前的过期结果。
             if (pollInProgress || isReconnecting || activeSettings == null
                 || activeSettings.Mode == CommunicationMode.Simulation)
                 return;
@@ -290,6 +291,7 @@ namespace My_Industrial_Monitoring_Platform
 
         private async Task BeginReconnect(Exception error)
         {
+            // 读取失败后停止正常轮询，断开旧连接并启动限时重连流程。
             if (activeSettings == null || activeSettings.Mode == CommunicationMode.Simulation || isReconnecting)
                 return;
 
@@ -474,6 +476,7 @@ namespace My_Industrial_Monitoring_Platform
 
         private void PublishReading(SensorReading reading, string source)
         {
+            // 通过事件把读数交给首页，同时更新通信状态和日志。
             Action<SensorReading> handler = ReadingProduced;
             if (handler != null)
                 handler(reading);

@@ -41,6 +41,7 @@ namespace My_Industrial_Monitoring_Platform
 
         public async void AddEntry(string direction, string operation, string result, string details, string deviceId = null)
         {
+            // 先显示日志，再异步保存；数据库失败不会中断通信流程。
             DateTime timestamp = DateTime.Now;
             long rowId = ++nextRowId;
             DataGridViewRow row = InsertRow(timestamp, direction, operation, result, details);

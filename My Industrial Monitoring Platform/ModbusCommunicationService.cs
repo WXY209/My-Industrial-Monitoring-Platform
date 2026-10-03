@@ -130,6 +130,7 @@ namespace My_Industrial_Monitoring_Platform
 
         private ushort ReadRegister(ushort address)
         {
+            // 根据配置选择读输入寄存器或保持寄存器，每次读取一个 16 位值。
             ushort[] result = settings.Function == RegisterFunction.InputRegister
                 ? master.ReadInputRegisters(settings.UnitId, address, 1)
                 : master.ReadHoldingRegisters(settings.UnitId, address, 1);
@@ -140,6 +141,7 @@ namespace My_Industrial_Monitoring_Platform
 
         private static double ConvertRaw(ushort raw, bool signed)
         {
+            // 部分设备用有符号 16 位整数表示寄存器值。
             return signed ? (double)unchecked((short)raw) : raw;
         }
 

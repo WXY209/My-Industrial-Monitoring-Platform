@@ -44,6 +44,7 @@ namespace My_Industrial_Monitoring_Platform
                     adapter.Fill(table);
             }
 
+            // 查询结果按最新优先排列；倒序加入后，曲线缓存按时间从旧到新排列。
             for (int i = table.Rows.Count - 1; i >= 0; i--)
             {
                 DataRow row = table.Rows[i];
