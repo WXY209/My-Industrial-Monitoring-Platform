@@ -70,6 +70,12 @@
     <Compile Include="UserManagementPage.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="UserListControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="AddUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="DataRecordPage.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -100,6 +106,15 @@
     <Compile Include="CommunicationUi.cs" />
     <Compile Include="ModbusCommunicationService.cs" />
     <Compile Include="HomeOverviewPage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="OverviewToolbarControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="OverviewChartControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="OverviewAlarmControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="AlarmDB.cs" />
