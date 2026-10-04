@@ -18,8 +18,8 @@ namespace My_Industrial_Monitoring_Platform
             Application.SetCompatibleTextRenderingDefault(false);
             UserDB.Initizlize();
             DatabaseDB.Initialize();
-            //Application.Run(new Form1());
-            Application.Run(new HMI());
+            Application.Run(new Form1());
+            //Application.Run(new HMI());
         }
     }
 }
